@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects & Opportunities</title>
+</head>
+<body>
+    <h1>Projects & Opportunities Board</h1>
+
+    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
+    <p><a href="{{ url_for('create_project') }}">+ Create New Project / Opportunity</a></p>
+
+    {% if projects %}
+        <ul>
+            {% for project in projects %}
+                <li>
+                    <a href="{{ url_for('project_detail', project_id=project.id) }}">
+                        <strong>{{ project.title }}</strong>
+                    </a>
+                    {% if project.project_type %}
+                        ({{ project.project_type }})
+                    {% endif %}
+                    <br>
+                    <small>Posted on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No projects yet. Be the first to create one!</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Project</title>
+</head>
+<body>
+    <h1>Create New Project / Opportunity</h1>
+
+    <p><a href="{{ url_for('project_list') }}">Back to Project Board</a></p>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <p>
+            {{ form.title.label }}<br>
+            {{ form.title(size=60) }}
+            {% for error in form.title.errors %}
+                <span style="color:red;">{{ error }}</span>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.description.label }}<br>
+            {{ form.description(rows=5, cols=60) }}
+            {% for error in form.description.errors %}
+                <span style="color:red;">{{ error }}</span>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.skills_required.label }}<br>
+            {{ form.skills_required(size=60) }}
+        </p>
+
+        <p>
+            {{ form.project_type.label }}<br>
+            {{ form.project_type(size=40) }}
+        </p>
+
+        <p>{{ form.submit() }}</p>
+    </form>
+</body>
+</html>
