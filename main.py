@@ -2,9 +2,10 @@ from flask import Flask, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -20,10 +21,44 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 
+# ---------------------
+# MODELS
+# ---------------------
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
+    role = db.Column(db.String(10), nullable=False)  # 'student' or 'mentor'
+
+
+class Project(db.Model):
+    """Project & Opportunities Board entries"""
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    skills_required = db.Column(db.String(200))
+    project_type = db.Column(db.String(50))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Thread(db.Model):
+    """Discussion threads"""
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    category = db.Column(db.String(50))
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Post(db.Model):
+    """Replies inside a thread"""
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    thread_id = db.Column(db.Integer, db.ForeignKey('thread.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -31,23 +66,86 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+# ---------------------
+# FORMS
+# ---------------------
 class RegisterForm(FlaskForm):
-    username = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
-    password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
+    username = StringField(
+        validators=[InputRequired(), Length(min=4, max=20)],
+        render_kw={"placeholder": "Username"}
+    )
+    password = PasswordField(
+        validators=[InputRequired(), Length(min=4, max=20)],
+        render_kw={"placeholder": "Password"}
+    )
+    role = RadioField(
+        "Role",
+        choices=[("student", "Student"), ("mentor", "Mentor")],
+        default="student",
+        validators=[InputRequired()]
+    )
     submit = SubmitField("Register")
 
     def validate_username(self, username):
         existing_user_username = User.query.filter_by(username=username.data).first()
         if existing_user_username:
-            raise ValidationError("That username already exists. Please choose a different one.")
+            raise ValidationError("Username already exists. Please choose a different one.")
 
 
 class LoginForm(FlaskForm):
-    username = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
-    password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Password"})
+    username = StringField(
+        validators=[InputRequired(), Length(min=4, max=20)],
+        render_kw={"placeholder": "Username"}
+    )
+    password = PasswordField(
+        validators=[InputRequired(), Length(min=4, max=20)],
+        render_kw={"placeholder": "Password"}
+    )
     submit = SubmitField("Login")
 
 
+class ProjectForm(FlaskForm):
+    title = StringField(
+        "Project / Opportunity Title",
+        validators=[InputRequired(), Length(min=4, max=100)]
+    )
+    description = TextAreaField(
+        "Description",
+        validators=[InputRequired()]
+    )
+    skills_required = StringField(
+        "Skills Required (optional)"
+    )
+    project_type = StringField(
+        "Type (e.g. competition, research, personal)",
+        render_kw={"placeholder": "competition / research / personal"}
+    )
+    submit = SubmitField("Create")
+
+
+class ThreadForm(FlaskForm):
+    title = StringField(
+        "Thread Title",
+        validators=[InputRequired(), Length(min=4, max=150)]
+    )
+    category = StringField(
+        "Category (optional)",
+        render_kw={"placeholder": "Find Team / Ask Mentor / Resources"}
+    )
+    submit = SubmitField("Create Thread")
+
+
+class PostForm(FlaskForm):
+    content = TextAreaField(
+        "Reply",
+        validators=[InputRequired()]
+    )
+    submit = SubmitField("Post Reply")
+
+
+# ---------------------
+# AUTH + PROFILE ROUTES
+# ---------------------
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -63,7 +161,7 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('profile'))
             else:
                 error_message = "Invalid password. Please try again."
         else:
@@ -72,26 +170,13 @@ def login():
     return render_template('login.html', form=form, error_message=error_message)
 
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-@login_required
-def dashboard():
-    return render_template('dashboard.html')
-
-
-@app.route('/logout', methods=['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
 
-    if form.validate_on_submit(): 
+    if form.validate_on_submit():
         hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        new_user = User(username=form.username.data, password=hashed_pw)
+        new_user = User(username=form.username.data, password=hashed_pw, role=form.role.data)
 
         db.session.add(new_user)
         db.session.commit()
@@ -99,6 +184,101 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
+
+
+@app.route('/profile')
+@login_required
+def profile():
+    # shows username + role in profile.html
+    return render_template('profile.html', user=current_user)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+# ---------------------
+# PROJECT & OPPORTUNITIES BOARD
+# ---------------------
+@app.route('/projects')
+@login_required
+def project_list():
+    projects = Project.query.order_by(Project.created_at.desc()).all()
+    return render_template('projects.html', projects=projects)
+
+
+@app.route('/projects/create', methods=['GET', 'POST'])
+@login_required
+def create_project():
+    form = ProjectForm()
+    if form.validate_on_submit():
+        project = Project(
+            title=form.title.data,
+            description=form.description.data,
+            skills_required=form.skills_required.data,
+            project_type=form.project_type.data,
+            owner_id=current_user.id
+        )
+        db.session.add(project)
+        db.session.commit()
+        return redirect(url_for('project_list'))
+    return render_template('project_create.html', form=form)
+
+
+@app.route('/projects/<int:project_id>')
+@login_required
+def project_detail(project_id):
+    project = Project.query.get_or_404(project_id)
+    # If you want owner username, you could look it up here later
+    return render_template('project_detail.html', project=project)
+
+
+# ---------------------
+# BASIC DISCUSSION BOARD
+# ---------------------
+@app.route('/forum')
+@login_required
+def forum():
+    threads = Thread.query.order_by(Thread.created_at.desc()).all()
+    return render_template('forum.html', threads=threads)
+
+
+@app.route('/forum/create', methods=['GET', 'POST'])
+@login_required
+def create_thread():
+    form = ThreadForm()
+    if form.validate_on_submit():
+        thread = Thread(
+            title=form.title.data,
+            category=form.category.data,
+            creator_id=current_user.id
+        )
+        db.session.add(thread)
+        db.session.commit()
+        return redirect(url_for('forum'))
+    return render_template('thread_create.html', form=form)
+
+
+@app.route('/forum/<int:thread_id>', methods=['GET', 'POST'])
+@login_required
+def thread_detail(thread_id):
+    thread = Thread.query.get_or_404(thread_id)
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(
+            content=form.content.data,
+            thread_id=thread.id,
+            author_id=current_user.id
+        )
+        db.session.add(post)
+        db.session.commit()
+        return redirect(url_for('thread_detail', thread_id=thread.id))
+
+    posts = Post.query.filter_by(thread_id=thread.id).order_by(Post.created_at.asc()).all()
+    return render_template('thread_detail.html', thread=thread, posts=posts, form=form)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    <h1>Welcome, {{ user.username }}!</h1>
+    <p>You are logged in as: <strong>{{ user.role|capitalize }}</strong></p>
+
+    {% if user.role == 'student' %}
+        <p>This is the student profile section (later you can show student features here).</p>
+    {% elif user.role == 'mentor' %}
+        <p>This is the mentor profile section (later you can show mentor features here).</p>
+    {% endif %}
+
+    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
+    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
+    <a href="{{ url_for('logout') }}">Press here to logout</a>
+</body>
+</html>
