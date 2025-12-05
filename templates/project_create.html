@@ -10,36 +10,63 @@
 
     <p><a href="{{ url_for('project_list') }}">Back to Project Board</a></p>
 
-    <form method="POST">
-        {{ form.hidden_tag() }}
+<form method="POST">
+    {{ form.hidden_tag() }}
 
+    <p>
+        {{ form.title.label }}<br>
+        {{ form.title(size=60) }}
+        {% for error in form.title.errors %}
+            <span style="color:red;">{{ error }}</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        {{ form.description.label }}<br>
+        {{ form.description(rows=5, cols=60) }}
+        {% for error in form.description.errors %}
+            <span style="color:red;">{{ error }}</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        {{ form.project_type.label }}<br>
+        {{ form.project_type(id="project_type") }}
+    </p>
+
+    <div id="other-project-type-wrapper" style="display:none;">
         <p>
-            {{ form.title.label }}<br>
-            {{ form.title(size=60) }}
-            {% for error in form.title.errors %}
+            {{ form.other_project_type.label }}<br>
+            {{ form.other_project_type() }}
+            {% for error in form.other_project_type.errors %}
                 <span style="color:red;">{{ error }}</span>
             {% endfor %}
         </p>
+    </div>
 
-        <p>
-            {{ form.description.label }}<br>
-            {{ form.description(rows=5, cols=60) }}
-            {% for error in form.description.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
+    <p>
+        {{ form.skills_required.label }}<br>
+        {{ form.skills_required(size=60) }}
+    </p>
 
-        <p>
-            {{ form.skills_required.label }}<br>
-            {{ form.skills_required(size=60) }}
-        </p>
+    <p>{{ form.submit() }}</p>
+</form>
 
-        <p>
-            {{ form.project_type.label }}<br>
-            {{ form.project_type(size=40) }}
-        </p>
+<script>
+function toggleOtherProjectType() {
+    var selectEl = document.getElementById('project_type');
+    var otherDiv = document.getElementById('other-project-type-wrapper');
+    if (selectEl.value === 'Other') {
+        otherDiv.style.display = 'block';
+    } else {
+        otherDiv.style.display = 'none';
+    }
+}
 
-        <p>{{ form.submit() }}</p>
-    </form>
+window.addEventListener('DOMContentLoaded', function () {
+    toggleOtherProjectType();  // initial
+    document.getElementById('project_type').addEventListener('change', toggleOtherProjectType);
+});
+</script>
 </body>
 </html>

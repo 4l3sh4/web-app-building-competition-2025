@@ -6,32 +6,65 @@
     <title>{{ thread.title }}</title>
 </head>
 <body>
-    <h1>{{ thread.title }}</h1>
-
-    {% if thread.category %}
-        <p><strong>Category:</strong> {{ thread.category }}</p>
-    {% endif %}
-
     <p><a href="{{ url_for('forum') }}">Back to Discussion Board</a></p>
 
-    <h2>Posts</h2>
+    <p>
+        <a href="{{ url_for('view_user', user_id=thread.creator.id) }}">
+            {{ thread.creator.username }}
+        </a>
+        · {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+    <h1>{{ thread.title }}</h1>
+    
+    <p>{{ thread.body }}</p>
+
+    <p><strong>Score:</strong> {{ thread.score or 0 }}</p>
+    <p>
+        <a href="{{ url_for('upvote_thread', thread_id=thread.id) }}">⬆ Upvote</a> |
+        <a href="{{ url_for('downvote_thread', thread_id=thread.id) }}">⬇ Downvote</a>
+    </p>
+
+    <h2>Comments</h2>
+
+    {# ---------- NESTED COMMENTS MACRO ---------- #}
+    {% macro render_post(post, all_posts) %}
+        <li>
+            <small>
+                <a href="{{ url_for('view_user', user_id=post.author.id) }}">
+                    {{ post.author.username }}
+                </a>
+                · {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+                · <a href="{{ url_for('reply_post', thread_id=thread.id, parent_id=post.id) }}">Reply</a>
+            </small>
+            <p>{{ post.content }}</p>
+
+            {# find replies to this comment #}
+            {% set children = all_posts | selectattr('parent_id', 'equalto', post.id) | list %}
+            {% if children %}
+                <ul>
+                    {% for child in children %}
+                        {{ render_post(child, all_posts) }}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </li>
+    {% endmacro %}
+    {# ---------- END MACRO ---------- #}
+
     {% if posts %}
         <ul>
-            {% for post in posts %}
-                <li>
-                    <p>{{ post.content }}</p>
-                    <small>Posted on {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                </li>
+            {# only render top-level comments here #}
+            {% for post in posts if not post.parent_id %}
+                {{ render_post(post, posts) }}
             {% endfor %}
         </ul>
     {% else %}
-        <p>No replies yet. Be the first to reply!</p>
+        <p>No comments yet. Be the first to reply!</p>
     {% endif %}
 
-    <h3>Reply</h3>
+    <h3>Add a comment</h3>
     <form method="POST">
         {{ form.hidden_tag() }}
-
         <p>
             {{ form.content.label }}<br>
             {{ form.content(rows=3, cols=60) }}
@@ -39,7 +72,6 @@
                 <span style="color:red;">{{ error }}</span>
             {% endfor %}
         </p>
-
         <p>{{ form.submit() }}</p>
     </form>
 </body>

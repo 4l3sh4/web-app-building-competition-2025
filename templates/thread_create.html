@@ -7,6 +7,10 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/thread-create.css') }}">
     <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/thread-create.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <title>Create Thread</title>
 </head>
 <body>
@@ -17,7 +21,16 @@
                 <h1>Create New Thread</h1>
                 <a class="back-link" href="{{ url_for('forum') }}">← Back to Discussion Board</a>
             </div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    <div class="container">
+        <div class="card">
+            <div class="page-header">
+                <h1>Create New Thread</h1>
+                <a class="back-link" href="{{ url_for('forum') }}">← Back to Discussion Board</a>
+            </div>
 
+            <form method="POST">
+                {{ form.hidden_tag() }}
             <form method="POST">
                 {{ form.hidden_tag() }}
 
@@ -30,18 +43,52 @@
                 </div>
 
                 <div class="form-group">
+                    {{ form.body.label }}
+                    {{ form.body(rows=5, cols=60, class='form-control') }}
+                    {% for error in form.body.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
                     {{ form.category.label }}
-                    {{ form.category(class='form-control') }}
+                    {{ form.category(class='form-control', id='category') }}
                     {% for error in form.category.errors %}
                         <span class="error-message">{{ error }}</span>
                     {% endfor %}
                 </div>
 
-                    <div class="submit-row">
-                        {{ form.submit(class='submit-btn') }}
-                    </div>
-                </form>
-            </div>
+                <!-- ADD THIS SECTION FOR "OTHER" CATEGORY -->
+                <div class="form-group" id="other-category-wrapper" style="display:none;">
+                    {{ form.other_category.label }}
+                    {{ form.other_category(class='form-control') }}
+                    {% for error in form.other_category.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="submit-row">
+                    {{ form.submit(class='submit-btn') }}
+                </div>
+            </form>
         </div>
-    </body>
-    </html>
+    </div>
+
+    <script>
+    function toggleOtherCategory() {
+        var selectEl = document.getElementById('category');
+        var otherDiv = document.getElementById('other-category-wrapper');
+        if (selectEl.value === 'Other') {
+            otherDiv.style.display = 'block';
+        } else {
+            otherDiv.style.display = 'none';
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', function () {
+        toggleOtherCategory();  // initial check
+        document.getElementById('category').addEventListener('change', toggleOtherCategory);
+    });
+    </script>
+</body>
+</html>

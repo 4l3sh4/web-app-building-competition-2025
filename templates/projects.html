@@ -6,28 +6,53 @@
     <title>Projects & Opportunities</title>
 </head>
 <body>
-    <h1>Projects & Opportunities Board</h1>
+    {% if mine %}
+        <h1>My Projects & Opportunities</h1>
+        <p><a href="{{ url_for('project_list') }}">View all projects</a></p>
+    {% else %}
+        <h1>Projects & Opportunities Board</h1>
+        <p><a href="{{ url_for('my_projects') }}">View only my projects</a></p>
+    {% endif %}
 
     <p><a href="{{ url_for('home') }}">Back to Home</a></p>
     <p><a href="{{ url_for('create_project') }}">+ Create New Project / Opportunity</a></p>
+
+    <!-- Filter form -->
+    <form method="get">
+        <label for="category">Filter by category:</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+            <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
+            <option value="Competition" {% if selected_category == 'Competition' %}selected{% endif %}>Competition</option>
+            <option value="Research" {% if selected_category == 'Research' %}selected{% endif %}>Research</option>
+            <option value="Final Year Project" {% if selected_category == 'Final Year Project' %}selected{% endif %}>Final Year Project</option>
+            <option value="Personal Project" {% if selected_category == 'Personal Project' %}selected{% endif %}>Personal Project</option>
+            <option value="Event / Initiative" {% if selected_category == 'Event / Initiative' %}selected{% endif %}>Event / Initiative</option>
+            <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+    </form>
 
     {% if projects %}
         <ul>
             {% for project in projects %}
                 <li>
+                    <div>
+                        <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
+                            {{ project.owner.username }}
+                        </a>
+                        · {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+
                     <a href="{{ url_for('project_detail', project_id=project.id) }}">
                         <strong>{{ project.title }}</strong>
                     </a>
                     {% if project.project_type %}
                         ({{ project.project_type }})
                     {% endif %}
-                    <br>
-                    <small>Posted on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>No projects yet. Be the first to create one!</p>
+        <p>No projects found for this category.</p>
     {% endif %}
 </body>
 </html>
