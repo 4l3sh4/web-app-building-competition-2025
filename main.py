@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms.validators import InputRequired, Length, ValidationError, Email
 from flask_bcrypt import Bcrypt
 from datetime import datetime
 
@@ -27,6 +27,7 @@ login_manager.login_view = 'login'
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
+    email = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'student' or 'mentor'
 
@@ -74,6 +75,11 @@ class RegisterForm(FlaskForm):
         validators=[InputRequired(), Length(min=4, max=20)],
         render_kw={"placeholder": "Username"}
     )
+    email = StringField(
+        "Email",
+        validators=[InputRequired(), Email(), Length(max=120)],
+        render_kw={"placeholder": "Email"}
+    )
     password = PasswordField(
         validators=[InputRequired(), Length(min=4, max=20)],
         render_kw={"placeholder": "Password"}
@@ -90,6 +96,11 @@ class RegisterForm(FlaskForm):
         existing_user_username = User.query.filter_by(username=username.data).first()
         if existing_user_username:
             raise ValidationError("Username already exists. Please choose a different one.")
+
+    def validate_email(self, email):
+        existing_user_email = User.query.filter_by(email=email.data).first()
+        if existing_user_email:
+            raise ValidationError("Email already registered. Please use a different one.")
 
 
 class LoginForm(FlaskForm):
@@ -176,7 +187,7 @@ def register():
 
     if form.validate_on_submit():
         hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        new_user = User(username=form.username.data, password=hashed_pw, role=form.role.data)
+        new_user = User(username=form.username.data, email=form.email.data, password=hashed_pw, role=form.role.data)
 
         db.session.add(new_user)
         db.session.commit()

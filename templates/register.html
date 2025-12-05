@@ -20,6 +20,14 @@
         </div>
 
         <div>
+            {{ form.email.label }}<br>
+            {{ form.email }}
+            {% for error in form.email.errors %}
+                <div style="color:red;">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div>
             {{ form.password.label }}<br>
             {{ form.password }}
             {% for error in form.password.errors %}
