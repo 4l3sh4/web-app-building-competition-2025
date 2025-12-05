@@ -136,8 +136,6 @@ class StudentProfile(db.Model):
 
     specialization = db.Column(db.String(20), nullable=True)  
 
-    interests = db.Column(db.Text)      
-    skills = db.Column(db.Text)
     bio = db.Column(db.Text)
 
 
@@ -418,15 +416,15 @@ def register():
 
         # Then redirect to profile setup
         if new_user.role == 'student':
-            return redirect(url_for('setup_student_profile'))
+            return redirect(url_for('edit_student_profile'))
         else:
-            return redirect(url_for('setup_mentor_profile'))
+            return redirect(url_for('edit_mentor_profile'))
 
     return render_template('register.html', form=form)
 
-@app.route('/student/profile/setup', methods=['GET', 'POST'])
+@app.route('/student/profile/edit', methods=['GET', 'POST'])
 @login_required
-def setup_student_profile():
+def edit_student_profile():
     if current_user.role != 'student':
         return redirect(url_for('home'))  
 
@@ -438,8 +436,6 @@ def setup_student_profile():
         programme = request.form.get('programme')      
         year = int(request.form.get('year'))          
         specialization = request.form.get('specialization') or None
-        interests = request.form.get('interests')
-        skills = request.form.get('skills')
         bio = request.form.get('bio')
 
         if not profile:
@@ -450,8 +446,6 @@ def setup_student_profile():
         profile.programme = programme
         profile.year = year
         profile.specialization = specialization
-        profile.interests = interests
-        profile.skills = skills
         profile.bio = bio
 
         db.session.add(profile)
