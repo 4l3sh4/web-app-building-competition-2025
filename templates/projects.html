@@ -6,11 +6,18 @@
     <title>Projects & Opportunities</title>
 </head>
 <body>
-    <h1>Projects & Opportunities Board</h1>
+    {% if mine %}
+        <h1>My Projects & Opportunities</h1>
+        <p><a href="{{ url_for('project_list') }}">View all projects</a></p>
+    {% else %}
+        <h1>Projects & Opportunities Board</h1>
+        <p><a href="{{ url_for('my_projects') }}">View only my projects</a></p>
+    {% endif %}
 
     <p><a href="{{ url_for('home') }}">Back to Home</a></p>
     <p><a href="{{ url_for('create_project') }}">+ Create New Project / Opportunity</a></p>
 
+    <!-- Filter form -->
     <form method="get">
         <label for="category">Filter by category:</label>
         <select name="category" id="category" onchange="this.form.submit()">
@@ -24,7 +31,6 @@
         </select>
     </form>
 
-
     {% if projects %}
         <ul>
             {% for project in projects %}
@@ -35,11 +41,11 @@
                     {% if project.project_type %}
                         ({{ project.project_type }})
                     {% endif %}
-                   <br>
-                   <small>
+                    <br>
+                    <small>
                         Posted by {{ project.owner.username }}
                         on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
-                   </small>
+                    </small>
                 </li>
             {% endfor %}
         </ul>
