@@ -69,9 +69,11 @@ class Thread(db.Model):
     """Discussion threads"""
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
+    body = db.Column(db.Text, nullable=True)  
     category = db.Column(db.String(50))
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    score = db.Column(db.Integer, default=0)  
     creator = db.relationship('User', backref='threads')
 
 
@@ -82,7 +84,18 @@ class Post(db.Model):
     thread_id = db.Column(db.Integer, db.ForeignKey('thread.id'), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # parent comment (for replies)
+    parent_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
+
+    # relationships
     author = db.relationship('User', backref='posts')
+    # self-referential relationship: one post can have many replies
+    replies = db.relationship(
+        'Post',
+        backref=db.backref('parent', remote_side=[id]),
+        lazy='dynamic'
+    )
 
 
 @login_manager.user_loader
@@ -200,6 +213,10 @@ class ThreadForm(FlaskForm):
         "Thread Title",
         validators=[InputRequired(), Length(min=4, max=150)]
     )
+    body = TextAreaField(        
+        "Content",
+        validators=[InputRequired()]
+    )
     category = SelectField(
         "Category",
         choices=[
@@ -207,11 +224,10 @@ class ThreadForm(FlaskForm):
             ("Ask for Help", "Ask for Help"),
             ("Share Resources", "Share Resources"),
             ("General Discussion", "General Discussion"),
-            ("Other", "Other"),  
+            ("Other", "Other"),
         ],
         default="General Discussion"
     )
-    # Text field for “Other”
     other_category = StringField(
         "Please specify (if Other)",
         render_kw={"placeholder": "e.g. Career Talk, Admin Issues"}
@@ -273,8 +289,15 @@ def register():
 @app.route('/profile')
 @login_required
 def profile():
-    # shows username + role in profile.html
-    return render_template('profile.html', user=current_user)
+    return render_template('profile.html', user=current_user, is_self=True)
+
+
+@app.route('/users/<int:user_id>')
+@login_required
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    is_self = (user.id == current_user.id)
+    return render_template('profile.html', user=user, is_self=is_self)
 
 
 @app.route('/logout')
@@ -368,12 +391,14 @@ def project_detail(project_id):
     ).first()
 
     member_count = ProjectMember.query.filter_by(project_id=project.id).count()
+    members = ProjectMember.query.filter_by(project_id=project.id).all()
 
     return render_template(
         'project_detail.html',
         project=project,
         is_member=bool(membership),
-        member_count=member_count
+        member_count=member_count,
+        members=members
     )
 
 
@@ -458,8 +483,10 @@ def project_chat(project_id):
 @login_required
 def forum():
     selected_category = request.args.get('category', 'All')
+    sort = request.args.get('sort', 'new') 
 
     query = Thread.query
+
     if selected_category == 'All':
         pass
     elif selected_category == 'Other':
@@ -467,12 +494,20 @@ def forum():
     else:
         query = query.filter_by(category=selected_category)
 
-    threads = query.order_by(Thread.created_at.desc()).all()
+    # sorting
+    if sort == 'top':
+        query = query.order_by(Thread.score.desc(), Thread.created_at.desc())
+    else:  # 'new'
+        query = query.order_by(Thread.created_at.desc())
+
+    threads = query.all()
+
     return render_template(
         'forum.html',
         threads=threads,
         selected_category=selected_category,
-        mine=False  # <— this tells the template we’re in “all threads” mode
+        sort=sort,
+        mine=False
     )
 
 
@@ -494,7 +529,7 @@ def my_threads():
         'forum.html',
         threads=threads,
         selected_category=selected_category,
-        mine=True  # <— tells template we’re in “my threads” mode
+        mine=True 
     )
 
 
@@ -503,9 +538,8 @@ def my_threads():
 def create_thread():
     form = ThreadForm()
     if form.validate_on_submit():
-        # Decide what category to save
+        # category handling
         if form.category.data == "Other":
-            # make sure user actually typed something
             if not form.other_category.data or not form.other_category.data.strip():
                 form.other_category.errors.append("Please specify the category.")
                 return render_template('thread_create.html', form=form)
@@ -515,6 +549,7 @@ def create_thread():
 
         thread = Thread(
             title=form.title.data,
+            body=form.body.data,          
             category=category_to_save,
             creator_id=current_user.id
         )
@@ -530,11 +565,14 @@ def create_thread():
 def thread_detail(thread_id):
     thread = Thread.query.get_or_404(thread_id)
     form = PostForm()
+
+    # this form is for **top-level** comments (not replies)
     if form.validate_on_submit():
         post = Post(
             content=form.content.data,
             thread_id=thread.id,
-            author_id=current_user.id
+            author_id=current_user.id,
+            parent_id=None   # top-level
         )
         db.session.add(post)
         db.session.commit()
@@ -542,6 +580,50 @@ def thread_detail(thread_id):
 
     posts = Post.query.filter_by(thread_id=thread.id).order_by(Post.created_at.asc()).all()
     return render_template('thread_detail.html', thread=thread, posts=posts, form=form)
+
+
+@app.route('/forum/<int:thread_id>/reply/<int:parent_id>', methods=['GET', 'POST'])
+@login_required
+def reply_post(thread_id, parent_id):
+    thread = Thread.query.get_or_404(thread_id)
+    parent_post = Post.query.get_or_404(parent_id)
+
+    # make sure the parent post belongs to this thread
+    if parent_post.thread_id != thread.id:
+        return redirect(url_for('thread_detail', thread_id=thread.id))
+
+    form = PostForm()
+    if form.validate_on_submit():
+        reply = Post(
+            content=form.content.data,
+            thread_id=thread.id,
+            author_id=current_user.id,
+            parent_id=parent_post.id  # 🆕 link to parent
+        )
+        db.session.add(reply)
+        db.session.commit()
+        return redirect(url_for('thread_detail', thread_id=thread.id))
+
+    # we’ll show a small reply page with parent comment context
+    return render_template('reply_post.html', thread=thread, parent_post=parent_post, form=form)
+
+
+@app.route('/forum/<int:thread_id>/upvote')
+@login_required
+def upvote_thread(thread_id):
+    thread = Thread.query.get_or_404(thread_id)
+    thread.score = (thread.score or 0) + 1
+    db.session.commit()
+    return redirect(url_for('thread_detail', thread_id=thread.id))
+
+
+@app.route('/forum/<int:thread_id>/downvote')
+@login_required
+def downvote_thread(thread_id):
+    thread = Thread.query.get_or_404(thread_id)
+    thread.score = (thread.score or 0) - 1
+    db.session.commit()
+    return redirect(url_for('thread_detail', thread_id=thread.id))
 
 
 if __name__ == '__main__':

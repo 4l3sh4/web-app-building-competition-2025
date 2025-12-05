@@ -13,13 +13,6 @@
         <a href="{{ url_for('leave_project', project_id=project.id) }}">Leave Project</a>
     </p>
 
-    <h2>Members</h2>
-    <ul>
-        {% for m in members %}
-            <li>{{ m.user.username }}</li>
-        {% endfor %}
-    </ul>
-
     <h2>Messages</h2>
     {% if messages %}
         <ul>

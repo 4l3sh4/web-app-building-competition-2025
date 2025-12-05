@@ -17,6 +17,16 @@
     <p><a href="{{ url_for('home') }}">Back to Home</a></p>
     <p><a href="{{ url_for('create_thread') }}">+ Start New Thread</a></p>
 
+    <p>
+        Sort:
+        <a href="{{ url_for('forum', category=selected_category, sort='new') }}">
+            {% if sort == 'new' %}<strong>New</strong>{% else %}New{% endif %}
+        </a> |
+        <a href="{{ url_for('forum', category=selected_category, sort='top') }}">
+            {% if sort == 'top' %}<strong>Top</strong>{% else %}Top{% endif %}
+        </a>
+    </p>
+
     <form method="get">
         <label for="category">Filter by category:</label>
         <select name="category" id="category" onchange="this.form.submit()">
@@ -27,15 +37,16 @@
             <option value="General Discussion" {% if selected_category == 'General Discussion' %}selected{% endif %}>General Discussion</option>
             <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
         </select>
+        <input type="hidden" name="sort" value="{{ sort }}">
     </form>
-
 
     {% if threads %}
         <ul>
             {% for thread in threads %}
                 <li>
+                    <strong>[{{ thread.score or 0 }}]</strong>
                     <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
-                        <strong>{{ thread.title }}</strong>
+                        {{ thread.title }}
                     </a>
                     {% if thread.category %}
                         ({{ thread.category }})
@@ -49,7 +60,7 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>No threads found for this category.</p>
+        <p>No threads found.</p>
     {% endif %}
 </body>
 </html>

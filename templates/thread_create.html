@@ -22,6 +22,14 @@
     </p>
 
     <p>
+        {{ form.body.label }}<br>
+        {{ form.body(rows=5, cols=60) }}
+        {% for error in form.body.errors %}
+            <span style="color:red;">{{ error }}</span>
+        {% endfor %}
+    </p>
+
+    <p>
         {{ form.category.label }}<br>
         {{ form.category(id="category") }}
     </p>
@@ -51,7 +59,7 @@ function toggleOtherCategory() {
 }
 
 window.addEventListener('DOMContentLoaded', function () {
-    toggleOtherCategory();  // set initial state
+    toggleOtherCategory();
     document.getElementById('category').addEventListener('change', toggleOtherCategory);
 });
 </script>
