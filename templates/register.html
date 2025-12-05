@@ -4,25 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/signup-login.css') }}"> 
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/signup-login.css') }}"> 
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/signup-login.css') }}">
     <title>Register</title>
     <style>
         body {
             background: linear-gradient(135deg, #0954A0 0%, salmon 100%);
-        }
-    </style>
-    <style>
-        body {
-            background: linear-gradient(135deg, #0954A0 0%, salmon 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
     <div class="signup-login-container">
         <div class="signup-login-header">
-            <img src="{{ url_for('static', filename='assets/logo/ebhive_logo.png') }}" width="65%">
+            <img src="{{ url_for('static', filename='assets/logo/ebhive_logo.png') }}" width="65%" alt="EBHive Logo">
             <h1>Create an Account!</h1>
             <p>Join us today.</p>
         </div>
@@ -31,8 +29,6 @@
             <div class="alert-danger">{{ error_message }}</div>
         {% endif %}
 
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
         <form method="POST" action="">
             {{ form.hidden_tag() }}
 
@@ -64,7 +60,7 @@
                 {{ form.role.label }}
                 <div class="radio-group">
                     {% for subfield in form.role %}
-                        <label>
+                        <label class="radio-label">
                             {{ subfield() }} {{ subfield.label.text }}
                         </label>
                     {% endfor %}
@@ -74,10 +70,12 @@
                 {% endfor %}
             </div>
 
-        <div class="signup-login-link">
-            <p>Already have an account? <a href="{{ url_for('login') }}">Log In</a>.</p>
             <button type="submit" class="submit-btn">{{ form.submit.label }}</button>
         </form>
+
+        <div class="signup-login-link">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Log In</a>.</p>
+        </div>
     </div>
 </body>
 </html>
