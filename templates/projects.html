@@ -3,31 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/projects.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <title>Projects & Opportunities</title>
 </head>
 <body>
-    <h1>Projects & Opportunities Board</h1>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    
+    <div class="projects-wrapper">
+        <div class="projects-header">
+            <h1>Projects & Opportunities Board</h1>
+            <div class="projects-nav">
+                <a href="{{ url_for('home') }}" class="btn btn-ghost">← Back to Home</a>
+                <a href="{{ url_for('create_project') }}" class="btn btn-primary">+ Create New Project</a>
+            </div>
+        </div>
 
-    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
-    <p><a href="{{ url_for('create_project') }}">+ Create New Project / Opportunity</a></p>
-
-    {% if projects %}
-        <ul>
-            {% for project in projects %}
-                <li>
-                    <a href="{{ url_for('project_detail', project_id=project.id) }}">
-                        <strong>{{ project.title }}</strong>
+        {% if projects %}
+            <div class="projects-grid">
+                {% for project in projects %}
+                    <a href="{{ url_for('project_detail', project_id=project.id) }}" class="project-card">
+                        <h3>{{ project.title }}</h3>
+                        
+                        {% if project.project_type %}
+                            <span class="project-type">{{ project.project_type }}</span>
+                        {% endif %}
+                        
+                        <div class="project-meta">
+                            <span>Posted on {{ project.created_at.strftime('%Y-%m-%d') }}</span>
+                        </div>
                     </a>
-                    {% if project.project_type %}
-                        ({{ project.project_type }})
-                    {% endif %}
-                    <br>
-                    <small>Posted on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No projects yet. Be the first to create one!</p>
-    {% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No projects yet. Be the first to create one!</p>
+                <a href="{{ url_for('create_project') }}" class="btn btn-primary">Create Project</a>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>
