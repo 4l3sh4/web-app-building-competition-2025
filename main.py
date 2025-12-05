@@ -37,39 +37,81 @@ class User(db.Model, UserMixin):
 
 FACULTIES = [
     ('fci', 'Faculty of Computing & Informatics (FCI)'),
-    ('faie', 'Faculty of Artificial Intelligence & Engineering (FAIE)')
+    ('faie', 'Faculty of Artificial Intelligence & Engineering (FAIE)'),
+    ('fist', 'Faculty of Information Science & Technology (FIST)'),
+    ('fet', 'Faculty of Engineering & Technology (FET)'),
 ]
 
 PROGRAMME_LABELS = {
     'fci': [
         ('bcs', 'Bachelor of Computer Science (Hons.)'),
-        ('bit', 'Bachelor of Information Technology (Hons.) (Information Systems)'),
+        ('bit', 'Bachelor of Information Technology (Hons.)'),
         ('dit', 'Diploma in Information Technology'),
     ],
 
     'faie': [
         ('be', 'Bachelor of Engineering (Hons.)'),
         ('bs', 'Bachelor of Science (Hons.)'),
-    ]
+    ],
+
+    'fist': [
+        ('bcs', 'Bachelor of Computer Science (Hons.)'),
+        ('bit', 'Bachelor of Information Technology (Hons.)'),
+        ('bs', 'Bachelor of Science (Hons.) Bioinformatics'),
+        ('dit', 'Diploma in Information Technology'),
+    ],
+
+    'fet': [
+        ('be', 'Bachelor of Engineering (Hons.)'),
+        ('bee', 'Bachelor of Electronics Engineering (Hons.) (Robotics & Automation)'),
+        ('bme', 'Bachelor of Mechanical Engineering (Hons.)'),
+        ('dee', 'Diploma in Electronic Engineering'),
+        ('dme', 'Diploma in Mechanical Engineering'),
+    ],
 }
 
 SPECIALIZATION_CHOICES = {
-    'bcs': [
-        ('cyber', 'Cybersecurity'),
-        ('se', 'Software Engineering'),
-        ('ds', 'Data Science'),
-        ('game', 'Game Development'),
-    ],
-    'be': [
-        ('electrical', 'Electrical'),
-        ('electronics', 'Electronics'),
-        ('et', 'Electronic majoring in Telecommunication'),
-        ('ec', 'Electronic majoring in Computer'),
-    ],
-    'bs': [
-        ('ai', 'Applied Artificial Intelligence'),
-        ('ir', 'Intelligent Robotics'),
-    ],
+    'fci': {
+        'bcs': [
+            ('cyber', 'Cybersecurity'),
+            ('se', 'Software Engineering'),
+            ('ds', 'Data Science'),
+            ('game', 'Game Development'),
+        ],
+        'bit': [
+            ('is', 'Information Systems'),
+        ],
+    },
+    'faie': {
+        'be': [
+            ('electrical', 'Electrical'),
+            ('electronics', 'Electronics'),
+            ('telecomm', 'Electronic majoring in Telecommunication'),
+            ('computer', 'Electronic majoring in Computer'),
+        ],
+        'bs': [
+            ('ai', 'Applied Artificial Intelligence'),
+            ('ir', 'Intelligent Robotics'),
+        ],
+    },
+    'fist': {
+        'bcs': [
+            ('ai', 'Artificial Intelligence'),
+        ],
+        'bit': [
+            ('networking', 'Data Communications and Networking'),
+            ('business', 'Business Intelligence and Analytics'),
+            ('security', 'Security Technology'),
+        ],
+        'bs': [
+            ('bioinfo', 'Bioinformatics'),
+        ],
+    },
+    'fet': {
+        'be': [
+            ('telecomm', 'Electronic majoring in Telecommunication'),
+        ],
+    }
 }
 
 YEAR_CHOICES = [

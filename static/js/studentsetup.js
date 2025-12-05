@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateProgramme() {
         const faculty = facultySelect.value;
 
-        // Clear programmes
         programmeSelect.innerHTML = "";
         const defaultOpt = document.createElement("option");
         defaultOpt.value = "";
@@ -34,15 +33,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateSpecializations() {
+        const fac = facultySelect.value;
         const prog = programmeSelect.value;
         const year = parseInt(yearSelect.value || "1", 10);
 
-        const needsSpec =
-            (prog === "bcs" && year >= 2) ||
-            prog === "be" ||
-            prog === "bs";
+        const facSpecs = specializationChoices[fac] || {};
+        const options = facSpecs[prog] || [];
 
-        // Clear specialization options
+        // BCS: only pick spec from Year 2 onwards
+        const isBcs = (fac === "fci" && prog === "bcs");
+        const needsSpec = options.length > 0 && (!isBcs || year >= 2);
+
         specSelect.innerHTML = "";
         const defaultOpt = document.createElement("option");
         defaultOpt.value = "";
@@ -54,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const options = specializationChoices[prog] || [];
         options.forEach(([value, label]) => {
             const opt = document.createElement("option");
             opt.value = value;
@@ -68,17 +68,15 @@ document.addEventListener('DOMContentLoaded', function () {
         specWrapper.style.display = "block";
     }
 
-    // listeners
     facultySelect.addEventListener("change", function () {
         updateProgramme();
-        // reset spec when programme changes
         updateSpecializations();
     });
 
     programmeSelect.addEventListener("change", updateSpecializations);
     yearSelect.addEventListener("change", updateSpecializations);
 
-    // initial load
+    // initial load 
     updateProgramme();
     updateSpecializations();
 });
