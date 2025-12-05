@@ -6,11 +6,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/thread-create.css') }}">
-    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/thread-create.css') }}">
-    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
     <title>Create Thread</title>
 </head>
 <body>
@@ -21,16 +17,7 @@
                 <h1>Create New Thread</h1>
                 <a class="back-link" href="{{ url_for('forum') }}">← Back to Discussion Board</a>
             </div>
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
-    <div class="container">
-        <div class="card">
-            <div class="page-header">
-                <h1>Create New Thread</h1>
-                <a class="back-link" href="{{ url_for('forum') }}">← Back to Discussion Board</a>
-            </div>
 
-            <form method="POST">
-                {{ form.hidden_tag() }}
             <form method="POST">
                 {{ form.hidden_tag() }}
 
@@ -58,7 +45,6 @@
                     {% endfor %}
                 </div>
 
-                <!-- ADD THIS SECTION FOR "OTHER" CATEGORY -->
                 <div class="form-group" id="other-category-wrapper" style="display:none;">
                     {{ form.other_category.label }}
                     {{ form.other_category(class='form-control') }}
@@ -75,19 +61,41 @@
     </div>
 
     <script>
+    // Function to toggle "Other" category field
     function toggleOtherCategory() {
         var selectEl = document.getElementById('category');
         var otherDiv = document.getElementById('other-category-wrapper');
-        if (selectEl.value === 'Other') {
-            otherDiv.style.display = 'block';
-        } else {
-            otherDiv.style.display = 'none';
+        if (selectEl && otherDiv) {
+            if (selectEl.value === 'Other') {
+                otherDiv.style.display = 'block';
+            } else {
+                otherDiv.style.display = 'none';
+            }
         }
     }
 
-    window.addEventListener('DOMContentLoaded', function () {
-        toggleOtherCategory();  // initial check
-        document.getElementById('category').addEventListener('change', toggleOtherCategory);
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up dark mode toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                // Update button text based on mode
+                if (document.body.classList.contains('dark-mode')) {
+                    themeToggle.textContent = '☀️';
+                } else {
+                    themeToggle.textContent = '🌙';
+                }
+            });
+        }
+
+        // Set up "Other" category toggle
+        toggleOtherCategory(); // Initial check
+        const categorySelect = document.getElementById('category');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', toggleOtherCategory);
+        }
     });
     </script>
 </body>
