@@ -61,8 +61,18 @@ class ProjectMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # 🆕 parent message (null = top-level message)
+    parent_id = db.Column(db.Integer, db.ForeignKey('project_message.id'), nullable=True)
+
     author = db.relationship('User')
     project = db.relationship('Project', backref='messages')
+
+    # 🆕 self-relation: a message can have many replies
+    replies = db.relationship(
+        'ProjectMessage',
+        backref=db.backref('parent', remote_side=[id]),
+        lazy='dynamic'
+    )
 
 
 class Thread(db.Model):
@@ -441,12 +451,11 @@ def leave_project(project_id):
 def project_chat(project_id):
     project = Project.query.get_or_404(project_id)
 
-    # user must be a member – if not, auto-join
+    # ensure user is member (auto-join if not)
     membership = ProjectMember.query.filter_by(
         project_id=project.id,
         user_id=current_user.id
     ).first()
-
     if not membership:
         membership = ProjectMember(project_id=project.id, user_id=current_user.id)
         db.session.add(membership)
@@ -457,7 +466,8 @@ def project_chat(project_id):
         msg = ProjectMessage(
             project_id=project.id,
             author_id=current_user.id,
-            content=form.content.data
+            content=form.content.data,
+            parent_id=None   # 🔹 top-level message
         )
         db.session.add(msg)
         db.session.commit()
@@ -472,6 +482,39 @@ def project_chat(project_id):
         project=project,
         form=form,
         messages=messages,
+        members=members
+    )
+
+
+@app.route('/projects/<int:project_id>/chat/reply/<int:parent_id>', methods=['GET', 'POST'])
+@login_required
+def reply_project_message(project_id, parent_id):
+    project = Project.query.get_or_404(project_id)
+    parent_message = ProjectMessage.query.get_or_404(parent_id)
+
+    # safety: ensure parent message belongs to this project
+    if parent_message.project_id != project.id:
+        return redirect(url_for('project_chat', project_id=project.id))
+
+    form = ProjectMessageForm()
+    if form.validate_on_submit():
+        reply = ProjectMessage(
+            project_id=project.id,
+            author_id=current_user.id,
+            content=form.content.data,
+            parent_id=parent_message.id   # 🔹 link to parent
+        )
+        db.session.add(reply)
+        db.session.commit()
+        return redirect(url_for('project_chat', project_id=project.id))
+
+    members = ProjectMember.query.filter_by(project_id=project.id).all()
+
+    return render_template(
+        'reply_project_message.html',
+        project=project,
+        parent_message=parent_message,
+        form=form,
         members=members
     )
 

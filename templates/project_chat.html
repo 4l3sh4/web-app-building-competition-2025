@@ -14,21 +14,45 @@
     </p>
 
     <h2>Messages</h2>
+
+    {# ---------- NESTED MESSAGE MACRO ---------- #}
+    {% macro render_message(message, all_messages) %}
+        <li>
+            <strong>
+                <a href="{{ url_for('view_user', user_id=message.author.id) }}">
+                    {{ message.author.username }}
+                </a>
+            </strong>
+            <small>({{ message.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
+            · <a href="{{ url_for('reply_project_message', project_id=project.id, parent_id=message.id) }}">Reply</a>
+            <br>
+            {{ message.content }}
+
+            {# find replies #}
+            {% set children = all_messages | selectattr('parent_id', 'equalto', message.id) | list %}
+            {% if children %}
+                <ul>
+                    {% for child in children %}
+                        {{ render_message(child, all_messages) }}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </li>
+    {% endmacro %}
+    {# ---------- END MACRO ---------- #}
+
     {% if messages %}
         <ul>
-            {% for message in messages %}
-                <li>
-                    <strong>{{ message.author.username }}</strong>
-                    <small>({{ message.created_at.strftime('%Y-%m-%d %H:%M') }})</small><br>
-                    {{ message.content }}
-                </li>
+            {# only top-level messages here (no parent) #}
+            {% for message in messages if not message.parent_id %}
+                {{ render_message(message, messages) }}
             {% endfor %}
         </ul>
     {% else %}
         <p>No messages yet. Start the conversation!</p>
     {% endif %}
 
-    <h3>Send a message</h3>
+    <h3>Send a new message</h3>
     <form method="POST">
         {{ form.hidden_tag() }}
         <p>
