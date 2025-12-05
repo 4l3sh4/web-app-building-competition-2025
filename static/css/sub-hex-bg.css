@@ -1,0 +1,50 @@
+:root {
+    --card-bg: #ffffff;
+    --muted: #6b7280;
+    --success: #16a34a;
+    --text-primary: #111827;
+    --bg-primary: linear-gradient(135deg, #f6f8ff 0%, #e8f0ff 35%, #f7fafc 100%);
+    --hex-light: rgba(95, 175, 255, 0.05);
+    --hex-dark-light: rgba(9, 84, 160, 0.05);
+}
+
+html.dark-mode {
+    --accent-1: #5fafff;
+    --accent-2: #0954A0;
+    --card-bg: #1f2937;
+    --muted: #9ca3af;
+    --text-primary: #f3f4f6;
+    --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 35%, #111827 100%);
+    --hex-light: rgba(95, 175, 255, 0.03);
+    --hex-dark-light: rgba(9, 84, 160, 0.03);
+}
+
+body {
+    background: var(--bg-primary);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height:100vh;
+    display:flex;
+    align-items:start;
+    justify-content:center;
+    padding:48px 16px;
+    position: relative;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(30deg, transparent 24%, var(--hex-light) 25%, var(--hex-light) 26%, transparent 27%, transparent 74%, var(--hex-light) 75%, var(--hex-light) 76%, transparent 77%, transparent),
+        linear-gradient(60deg, transparent 24%, var(--hex-dark-light) 25%, var(--hex-dark-light) 26%, transparent 27%, transparent 74%, var(--hex-dark-light) 75%, var(--hex-dark-light) 76%, transparent 77%, transparent);
+    background-size: 50px 86.6px;
+    background-position: 0 0, 25px 43.3px;
+    pointer-events: none;
+    z-index: 1;
+    transition: background 0.3s ease;
+}
