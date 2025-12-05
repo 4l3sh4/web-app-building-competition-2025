@@ -1,9 +1,9 @@
-from flask import Flask, render_template, url_for, request, redirect
+from flask import Flask, render_template, url_for, redirect, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField, SelectField
+from wtforms.validators import InputRequired, Length, ValidationError, Email
 from flask_bcrypt import Bcrypt
 from datetime import datetime
 
@@ -27,6 +27,7 @@ login_manager.login_view = 'login'
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
+    email = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'student' or 'mentor'
 
@@ -121,15 +122,50 @@ class Project(db.Model):
     project_type = db.Column(db.String(50))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    owner = db.relationship('User', backref='projects')
+
+
+class ProjectMember(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User')
+    project = db.relationship('Project', backref='members')
+
+
+class ProjectMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # 🆕 parent message (null = top-level message)
+    parent_id = db.Column(db.Integer, db.ForeignKey('project_message.id'), nullable=True)
+
+    author = db.relationship('User')
+    project = db.relationship('Project', backref='messages')
+
+    # 🆕 self-relation: a message can have many replies
+    replies = db.relationship(
+        'ProjectMessage',
+        backref=db.backref('parent', remote_side=[id]),
+        lazy='dynamic'
+    )
 
 
 class Thread(db.Model):
     """Discussion threads"""
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
+    body = db.Column(db.Text, nullable=True)  
     category = db.Column(db.String(50))
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    score = db.Column(db.Integer, default=0)  
+    creator = db.relationship('User', backref='threads')
 
 
 class Post(db.Model):
@@ -140,10 +176,40 @@ class Post(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # parent comment (for replies)
+    parent_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
+
+    # relationships
+    author = db.relationship('User', backref='posts')
+    # self-referential relationship: one post can have many replies
+    replies = db.relationship(
+        'Post',
+        backref=db.backref('parent', remote_side=[id]),
+        lazy='dynamic'
+    )
+
+
 @login_manager.user_loader
 def load_user(user_id):
     # Flask-Login uses this to reload the user from the session
     return User.query.get(int(user_id))
+
+
+BASE_PROJECT_CATEGORIES = [
+    "Competition",
+    "Research",
+    "Final Year Project",
+    "Personal Project",
+    "Event / Initiative",
+]
+
+
+BASE_THREAD_CATEGORIES = [
+    "Find Team",
+    "Ask for Help",
+    "Share Resources",
+    "General Discussion",
+]
 
 
 # ---------------------
@@ -153,6 +219,11 @@ class RegisterForm(FlaskForm):
     username = StringField(
         validators=[InputRequired(), Length(min=4, max=20)],
         render_kw={"placeholder": "Username"}
+    )
+    email = StringField(
+        "Email",
+        validators=[InputRequired(), Email(), Length(max=120)],
+        render_kw={"placeholder": "Email"}
     )
     password = PasswordField(
         validators=[InputRequired(), Length(min=4, max=20)],
@@ -170,6 +241,11 @@ class RegisterForm(FlaskForm):
         existing_user_username = User.query.filter_by(username=username.data).first()
         if existing_user_username:
             raise ValidationError("Username already exists. Please choose a different one.")
+
+    def validate_email(self, email):
+        existing_user_email = User.query.filter_by(email=email.data).first()
+        if existing_user_email:
+            raise ValidationError("Email already registered. Please use a different one.")
 
 
 class LoginForm(FlaskForm):
@@ -196,11 +272,31 @@ class ProjectForm(FlaskForm):
     skills_required = StringField(
         "Skills Required (optional)"
     )
-    project_type = StringField(
-        "Type (e.g. competition, research, personal)",
-        render_kw={"placeholder": "competition / research / personal"}
+    project_type = SelectField(
+        "Category",
+        choices=[
+            ("Personal Project", "Personal Project"),
+            ("Competition", "Competition"),
+            ("Research", "Research"),
+            ("Final Year Project", "Final Year Project"),
+            ("Event / Initiative", "Event / Initiative"),
+            ("Other", "Other"),
+        ],
+        default="Personal Project"
+    )
+    other_project_type = StringField(
+        "Please specify (if Other)",
+        render_kw={"placeholder": "e.g. Outreach, Admin Task"}
     )
     submit = SubmitField("Create")
+
+
+class ProjectMessageForm(FlaskForm):
+    content = TextAreaField(
+        "Message",
+        validators=[InputRequired()]
+    )
+    submit = SubmitField("Send")
 
 
 class ThreadForm(FlaskForm):
@@ -208,9 +304,24 @@ class ThreadForm(FlaskForm):
         "Thread Title",
         validators=[InputRequired(), Length(min=4, max=150)]
     )
-    category = StringField(
-        "Category (optional)",
-        render_kw={"placeholder": "Find Team / Ask Mentor / Resources"}
+    body = TextAreaField(        
+        "Content",
+        validators=[InputRequired()]
+    )
+    category = SelectField(
+        "Category",
+        choices=[
+            ("Find Team", "Find Team"),
+            ("Ask for Help", "Ask for Help"),
+            ("Share Resources", "Share Resources"),
+            ("General Discussion", "General Discussion"),
+            ("Other", "Other"),
+        ],
+        default="General Discussion"
+    )
+    other_category = StringField(
+        "Please specify (if Other)",
+        render_kw={"placeholder": "e.g. Career Talk, Admin Issues"}
     )
     submit = SubmitField("Create Thread")
 
@@ -256,7 +367,7 @@ def register():
 
     if form.validate_on_submit():
         hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        new_user = User(username=form.username.data, password=hashed_pw, role=form.role.data)
+        new_user = User(username=form.username.data, email=form.email.data, password=hashed_pw, role=form.role.data)
 
         db.session.add(new_user)
         db.session.commit()
@@ -319,8 +430,15 @@ def setup_student_profile():
 @app.route('/profile')
 @login_required
 def profile():
-    # shows username + role in profile.html
-    return render_template('profile.html', user=current_user)
+    return render_template('profile.html', user=current_user, is_self=True)
+
+
+@app.route('/users/<int:user_id>')
+@login_required
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    is_self = (user.id == current_user.id)
+    return render_template('profile.html', user=user, is_self=is_self)
 
 
 @app.route('/logout')
@@ -336,8 +454,44 @@ def logout():
 @app.route('/projects')
 @login_required
 def project_list():
-    projects = Project.query.order_by(Project.created_at.desc()).all()
-    return render_template('projects.html', projects=projects)
+    selected_category = request.args.get('category', 'All')
+
+    query = Project.query
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Project.project_type.notin_(BASE_PROJECT_CATEGORIES))
+    else:
+        query = query.filter_by(project_type=selected_category)
+
+    projects = query.order_by(Project.created_at.desc()).all()
+    return render_template(
+        'projects.html',
+        projects=projects,
+        selected_category=selected_category
+    )
+
+
+@app.route('/projects/mine')
+@login_required
+def my_projects():
+    selected_category = request.args.get('category', 'All')
+
+    query = Project.query.filter_by(owner_id=current_user.id)
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Project.project_type.notin_(BASE_PROJECT_CATEGORIES))
+    else:
+        query = query.filter_by(project_type=selected_category)
+
+    projects = query.order_by(Project.created_at.desc()).all()
+    return render_template(
+        'projects.html',
+        projects=projects,
+        selected_category=selected_category,
+        mine=True
+    )
 
 
 @app.route('/projects/create', methods=['GET', 'POST'])
@@ -345,16 +499,25 @@ def project_list():
 def create_project():
     form = ProjectForm()
     if form.validate_on_submit():
+        if form.project_type.data == "Other":
+            if not form.other_project_type.data or not form.other_project_type.data.strip():
+                form.other_project_type.errors.append("Please specify the category.")
+                return render_template('project_create.html', form=form)
+            category_to_save = form.other_project_type.data.strip()
+        else:
+            category_to_save = form.project_type.data
+
         project = Project(
             title=form.title.data,
             description=form.description.data,
             skills_required=form.skills_required.data,
-            project_type=form.project_type.data,
+            project_type=category_to_save,
             owner_id=current_user.id
         )
         db.session.add(project)
         db.session.commit()
         return redirect(url_for('project_list'))
+
     return render_template('project_create.html', form=form)
 
 
@@ -362,8 +525,129 @@ def create_project():
 @login_required
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
-    # If you want owner username, you could look it up here later
-    return render_template('project_detail.html', project=project)
+
+    membership = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    member_count = ProjectMember.query.filter_by(project_id=project.id).count()
+    members = ProjectMember.query.filter_by(project_id=project.id).all()
+
+    return render_template(
+        'project_detail.html',
+        project=project,
+        is_member=bool(membership),
+        member_count=member_count,
+        members=members
+    )
+
+
+@app.route('/projects/<int:project_id>/join')
+@login_required
+def join_project(project_id):
+    project = Project.query.get_or_404(project_id)
+
+    existing = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    if not existing:
+        membership = ProjectMember(project_id=project.id, user_id=current_user.id)
+        db.session.add(membership)
+        db.session.commit()
+
+    # after joining, go straight to chat
+    return redirect(url_for('project_chat', project_id=project.id))
+
+
+@app.route('/projects/<int:project_id>/leave')
+@login_required
+def leave_project(project_id):
+    membership = ProjectMember.query.filter_by(
+        project_id=project_id,
+        user_id=current_user.id
+    ).first()
+
+    if membership:
+        db.session.delete(membership)
+        db.session.commit()
+
+    return redirect(url_for('project_detail', project_id=project_id))
+
+
+@app.route('/projects/<int:project_id>/chat', methods=['GET', 'POST'])
+@login_required
+def project_chat(project_id):
+    project = Project.query.get_or_404(project_id)
+
+    # ensure user is member (auto-join if not)
+    membership = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+    if not membership:
+        membership = ProjectMember(project_id=project.id, user_id=current_user.id)
+        db.session.add(membership)
+        db.session.commit()
+
+    form = ProjectMessageForm()
+    if form.validate_on_submit():
+        msg = ProjectMessage(
+            project_id=project.id,
+            author_id=current_user.id,
+            content=form.content.data,
+            parent_id=None   # 🔹 top-level message
+        )
+        db.session.add(msg)
+        db.session.commit()
+        return redirect(url_for('project_chat', project_id=project.id))
+
+    messages = ProjectMessage.query.filter_by(project_id=project.id) \
+                                   .order_by(ProjectMessage.created_at.asc()).all()
+    members = ProjectMember.query.filter_by(project_id=project.id).all()
+
+    return render_template(
+        'project_chat.html',
+        project=project,
+        form=form,
+        messages=messages,
+        members=members
+    )
+
+
+@app.route('/projects/<int:project_id>/chat/reply/<int:parent_id>', methods=['GET', 'POST'])
+@login_required
+def reply_project_message(project_id, parent_id):
+    project = Project.query.get_or_404(project_id)
+    parent_message = ProjectMessage.query.get_or_404(parent_id)
+
+    # safety: ensure parent message belongs to this project
+    if parent_message.project_id != project.id:
+        return redirect(url_for('project_chat', project_id=project.id))
+
+    form = ProjectMessageForm()
+    if form.validate_on_submit():
+        reply = ProjectMessage(
+            project_id=project.id,
+            author_id=current_user.id,
+            content=form.content.data,
+            parent_id=parent_message.id   # 🔹 link to parent
+        )
+        db.session.add(reply)
+        db.session.commit()
+        return redirect(url_for('project_chat', project_id=project.id))
+
+    members = ProjectMember.query.filter_by(project_id=project.id).all()
+
+    return render_template(
+        'reply_project_message.html',
+        project=project,
+        parent_message=parent_message,
+        form=form,
+        members=members
+    )
 
 
 # ---------------------
@@ -372,8 +656,55 @@ def project_detail(project_id):
 @app.route('/forum')
 @login_required
 def forum():
-    threads = Thread.query.order_by(Thread.created_at.desc()).all()
-    return render_template('forum.html', threads=threads)
+    selected_category = request.args.get('category', 'All')
+    sort = request.args.get('sort', 'new') 
+
+    query = Thread.query
+
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Thread.category.notin_(BASE_THREAD_CATEGORIES))
+    else:
+        query = query.filter_by(category=selected_category)
+
+    # sorting
+    if sort == 'top':
+        query = query.order_by(Thread.score.desc(), Thread.created_at.desc())
+    else:  # 'new'
+        query = query.order_by(Thread.created_at.desc())
+
+    threads = query.all()
+
+    return render_template(
+        'forum.html',
+        threads=threads,
+        selected_category=selected_category,
+        sort=sort,
+        mine=False
+    )
+
+
+@app.route('/forum/mine')
+@login_required
+def my_threads():
+    selected_category = request.args.get('category', 'All')
+
+    query = Thread.query.filter_by(creator_id=current_user.id)
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Thread.category.notin_(BASE_THREAD_CATEGORIES))
+    else:
+        query = query.filter_by(category=selected_category)
+
+    threads = query.order_by(Thread.created_at.desc()).all()
+    return render_template(
+        'forum.html',
+        threads=threads,
+        selected_category=selected_category,
+        mine=True 
+    )
 
 
 @app.route('/forum/create', methods=['GET', 'POST'])
@@ -381,14 +712,25 @@ def forum():
 def create_thread():
     form = ThreadForm()
     if form.validate_on_submit():
+        # category handling
+        if form.category.data == "Other":
+            if not form.other_category.data or not form.other_category.data.strip():
+                form.other_category.errors.append("Please specify the category.")
+                return render_template('thread_create.html', form=form)
+            category_to_save = form.other_category.data.strip()
+        else:
+            category_to_save = form.category.data
+
         thread = Thread(
             title=form.title.data,
-            category=form.category.data,
+            body=form.body.data,          
+            category=category_to_save,
             creator_id=current_user.id
         )
         db.session.add(thread)
         db.session.commit()
         return redirect(url_for('forum'))
+
     return render_template('thread_create.html', form=form)
 
 
@@ -397,11 +739,14 @@ def create_thread():
 def thread_detail(thread_id):
     thread = Thread.query.get_or_404(thread_id)
     form = PostForm()
+
+    # this form is for **top-level** comments (not replies)
     if form.validate_on_submit():
         post = Post(
             content=form.content.data,
             thread_id=thread.id,
-            author_id=current_user.id
+            author_id=current_user.id,
+            parent_id=None   # top-level
         )
         db.session.add(post)
         db.session.commit()
@@ -409,6 +754,50 @@ def thread_detail(thread_id):
 
     posts = Post.query.filter_by(thread_id=thread.id).order_by(Post.created_at.asc()).all()
     return render_template('thread_detail.html', thread=thread, posts=posts, form=form)
+
+
+@app.route('/forum/<int:thread_id>/reply/<int:parent_id>', methods=['GET', 'POST'])
+@login_required
+def reply_post(thread_id, parent_id):
+    thread = Thread.query.get_or_404(thread_id)
+    parent_post = Post.query.get_or_404(parent_id)
+
+    # make sure the parent post belongs to this thread
+    if parent_post.thread_id != thread.id:
+        return redirect(url_for('thread_detail', thread_id=thread.id))
+
+    form = PostForm()
+    if form.validate_on_submit():
+        reply = Post(
+            content=form.content.data,
+            thread_id=thread.id,
+            author_id=current_user.id,
+            parent_id=parent_post.id  # 🆕 link to parent
+        )
+        db.session.add(reply)
+        db.session.commit()
+        return redirect(url_for('thread_detail', thread_id=thread.id))
+
+    # we’ll show a small reply page with parent comment context
+    return render_template('reply_post.html', thread=thread, parent_post=parent_post, form=form)
+
+
+@app.route('/forum/<int:thread_id>/upvote')
+@login_required
+def upvote_thread(thread_id):
+    thread = Thread.query.get_or_404(thread_id)
+    thread.score = (thread.score or 0) + 1
+    db.session.commit()
+    return redirect(url_for('thread_detail', thread_id=thread.id))
+
+
+@app.route('/forum/<int:thread_id>/downvote')
+@login_required
+def downvote_thread(thread_id):
+    thread = Thread.query.get_or_404(thread_id)
+    thread.score = (thread.score or 0) - 1
+    db.session.commit()
+    return redirect(url_for('thread_detail', thread_id=thread.id))
 
 
 if __name__ == '__main__':
