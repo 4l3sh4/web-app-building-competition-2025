@@ -90,6 +90,39 @@ html.dark-mode {
 	margin: 0;
 }
 
+/* project type badge */
+.project-type {
+	display: inline-block;
+	background: linear-gradient(90deg, rgba(9,84,160,0.06), rgba(95,175,255,0.04));
+	color: var(--accent-1);
+	padding: 6px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	align-self: flex-start;
+	margin-top: 6px;
+	border: 1px solid rgba(9,84,160,0.06);
+}
+
+html.dark-mode .project-type {
+	background: rgba(255,255,255,0.03);
+	color: var(--accent-2);
+	border-color: rgba(255,255,255,0.06);
+}
+
+.project-excerpt {
+	color: var(--muted);
+	font-size: 14px;
+	line-height: 1.45;
+	margin: 6px 0 0 0;
+	/* clamp to 3 lines */
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
 .project-card {
 	background: var(--card-bg);
 	border-radius: 12px;
@@ -116,6 +149,23 @@ html.dark-mode {
 	border-top: 1px solid var(--border);
 	color: var(--muted);
 	font-size: 13px;
+}
+
+.meta-left { color: var(--muted); }
+
+.meta-right { display:flex; gap:10px; align-items:center; }
+
+.reply-count-badge {
+	background: var(--accent-2);
+	color: white;
+	padding: 4px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+html.dark-mode .reply-count-badge {
+	background: var(--accent-1);
 }
 
 .empty-state {

@@ -3,43 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/thread-create.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Create Project</title>
 </head>
 <body>
-    <h1>Create New Project / Opportunity</h1>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
-    <p><a href="{{ url_for('project_list') }}">Back to Project Board</a></p>
+    <div class="container">
+        <div class="card">
+            <div class="page-header">
+                <h1>Create New Project / Opportunity</h1>
+                <a class="back-link" href="{{ url_for('project_list') }}">← Back to Project Board</a>
+            </div>
 
-    <form method="POST">
-        {{ form.hidden_tag() }}
+            <form method="POST">
+                {{ form.hidden_tag() }}
 
-        <p>
-            {{ form.title.label }}<br>
-            {{ form.title(size=60) }}
-            {% for error in form.title.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
+                <div class="form-group">
+                    {{ form.title.label }}
+                    {{ form.title(class='form-control') }}
+                    {% for error in form.title.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
 
-        <p>
-            {{ form.description.label }}<br>
-            {{ form.description(rows=5, cols=60) }}
-            {% for error in form.description.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
+                <div class="form-group">
+                    {{ form.description.label }}
+                    {{ form.description(class='form-control') }}
+                    {% for error in form.description.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
 
-        <p>
-            {{ form.skills_required.label }}<br>
-            {{ form.skills_required(size=60) }}
-        </p>
+                <div class="form-group">
+                    {{ form.skills_required.label }}
+                    {{ form.skills_required(class='form-control') }}
+                </div>
 
-        <p>
-            {{ form.project_type.label }}<br>
-            {{ form.project_type(size=40) }}
-        </p>
+                <div class="form-group">
+                    {{ form.project_type.label }}
+                    {{ form.project_type(class='form-control') }}
+                </div>
 
-        <p>{{ form.submit() }}</p>
-    </form>
+                <div class="submit-row">
+                    {{ form.submit(class='submit-btn') }}
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
