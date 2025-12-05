@@ -34,7 +34,7 @@ body {
 .signup-login-header h1 {
     font-size: 32px;
     font-style: bold;
-    color: #0954A0;
+    color: var(--accent-1);
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -79,7 +79,7 @@ body {
 
 .form-group input:focus {
     outline: none;
-    border-color: #0954A0;
+    border-color: var(--accent-1);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -122,12 +122,12 @@ body {
 }
 
 .signup-login-link a {
-    color: #0954A0;
+    color: var(--accent-1);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s;
 }
 
 .signup-login-link a:hover {
-    color: #5fafff;
+    color: var(--accent-2);
 }

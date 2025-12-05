@@ -3,23 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/home.css') }}">
     <title>Home</title>
 </head>
 <body>
-    <h1>University STEM Mentorship &Collaboration Portal</h1>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    <div class="shell">
+        <div class="hero-wrapper">
+            <div class="hero-logo">
+                <div class="brand">
+                    <img src="{{ url_for('static', filename='assets/logo/ebhive_logo.png') }}" alt="logo">
+                </div>
+            </div>
 
-    {% if current_user.is_authenticated %}
-        <p>Welcome, {{ current_user.username }} ({{ current_user.role|capitalize }})</p>
-        <ul>
-            <li><a href="{{ url_for('profile') }}">My Profile</a></li>
-            <li><a href="{{ url_for('project_list') }}">Project & Opportunities Board</a></li>
-            <li><a href="{{ url_for('forum') }}">Discussion Board</a></li>
-            <li><a href="{{ url_for('logout') }}">Logout</a></li>
-        </ul>
-    {% else %}
-        <p>Please login or register to start collaborating.</p>
-        <a href="{{ url_for('login') }}">Login</a><br>
-        <a href="{{ url_for('register') }}">Register</a><br>
-    {% endif %}
+            <div class="hero-title">
+                <div class="hero-content">
+                    <h1>University STEM Mentorship & Collaboration Portal</h1>
+                    <p>Connect with mentors, find project collaborators, and discover opportunities across campus.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-grid">
+            <div class="panel">
+                {% if current_user.is_authenticated %}
+                    <div class="welcome">
+                        <h2>Welcome back, {{ current_user.username }}! <span style="color:var(--accent-1);font-size:13px">({{ current_user.role|capitalize }})</span></h2>
+                        <p class="muted">Use the links below to manage your profile and explore projects or discussions.</p>
+                    </div>
+
+                    <div class="quick-links">
+                        <a class="link-btn" href="{{ url_for('profile') }}"><span class="kbd">P</span> My Profile</a>
+                        <a class="link-btn" href="{{ url_for('project_list') }}"><span class="kbd">B</span> Project & Opportunities Board</a>
+                        <a class="link-btn" href="{{ url_for('forum') }}"><span class="kbd">F</span> Discussion Board</a>
+                        <a class="link-btn" href="{{ url_for('logout') }}"><span class="kbd">L</span> Logout</a>
+                    </div>
+                {% else %}
+                    <h2 style="margin-bottom:8px">Get started</h2>
+                    <p class="muted">Register an account or sign in to join projects, post in the forum, and collaborate with peers.</p>
+                    <div style="height:14px"></div>
+                    <div class="auth-cta">
+                        <a class="btn-primary" href="{{ url_for('register') }}">Create Account</a>
+                        <a class="btn-ghost" href="{{ url_for('login') }}">Sign In</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <aside class="panel">
+                <h3 style="margin-bottom:8px">Announcements</h3>
+                <p class="muted">No announcements yet — check back later for news, events, and deadlines.</p>
+            </aside>
+        </div>
+    </div>
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Load saved theme preference
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            html.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+        
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark-mode');
+            const isDark = html.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+    </script>
 </body>
 </html>
