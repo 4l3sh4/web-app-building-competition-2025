@@ -1,8 +1,8 @@
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField, SelectField
 from wtforms.validators import InputRequired, Length, ValidationError, Email
 from flask_bcrypt import Bcrypt
 from datetime import datetime
@@ -41,6 +41,7 @@ class Project(db.Model):
     project_type = db.Column(db.String(50))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    owner = db.relationship('User', backref='projects')
 
 
 class Thread(db.Model):
@@ -50,6 +51,7 @@ class Thread(db.Model):
     category = db.Column(db.String(50))
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    creator = db.relationship('User', backref='threads')
 
 
 class Post(db.Model):
@@ -59,12 +61,30 @@ class Post(db.Model):
     thread_id = db.Column(db.Integer, db.ForeignKey('thread.id'), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    author = db.relationship('User', backref='posts')
 
 
 @login_manager.user_loader
 def load_user(user_id):
     # Flask-Login uses this to reload the user from the session
     return User.query.get(int(user_id))
+
+
+BASE_PROJECT_CATEGORIES = [
+    "Competition",
+    "Research",
+    "Final Year Project",
+    "Personal Project",
+    "Event / Initiative",
+]
+
+
+BASE_THREAD_CATEGORIES = [
+    "Find Team",
+    "Ask for Help",
+    "Share Resources",
+    "General Discussion",
+]
 
 
 # ---------------------
@@ -127,9 +147,21 @@ class ProjectForm(FlaskForm):
     skills_required = StringField(
         "Skills Required (optional)"
     )
-    project_type = StringField(
-        "Type (e.g. competition, research, personal)",
-        render_kw={"placeholder": "competition / research / personal"}
+    project_type = SelectField(
+        "Category",
+        choices=[
+            ("Personal Project", "Personal Project"),
+            ("Competition", "Competition"),
+            ("Research", "Research"),
+            ("Final Year Project", "Final Year Project"),
+            ("Event / Initiative", "Event / Initiative"),
+            ("Other", "Other"),
+        ],
+        default="Personal Project"
+    )
+    other_project_type = StringField(
+        "Please specify (if Other)",
+        render_kw={"placeholder": "e.g. Outreach, Admin Task"}
     )
     submit = SubmitField("Create")
 
@@ -139,9 +171,21 @@ class ThreadForm(FlaskForm):
         "Thread Title",
         validators=[InputRequired(), Length(min=4, max=150)]
     )
-    category = StringField(
-        "Category (optional)",
-        render_kw={"placeholder": "Find Team / Ask Mentor / Resources"}
+    category = SelectField(
+        "Category",
+        choices=[
+            ("Find Team", "Find Team"),
+            ("Ask for Help", "Ask for Help"),
+            ("Share Resources", "Share Resources"),
+            ("General Discussion", "General Discussion"),
+            ("Other", "Other"),  
+        ],
+        default="General Discussion"
+    )
+    # Text field for “Other”
+    other_category = StringField(
+        "Please specify (if Other)",
+        render_kw={"placeholder": "e.g. Career Talk, Admin Issues"}
     )
     submit = SubmitField("Create Thread")
 
@@ -217,8 +261,44 @@ def logout():
 @app.route('/projects')
 @login_required
 def project_list():
-    projects = Project.query.order_by(Project.created_at.desc()).all()
-    return render_template('projects.html', projects=projects)
+    selected_category = request.args.get('category', 'All')
+
+    query = Project.query
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Project.project_type.notin_(BASE_PROJECT_CATEGORIES))
+    else:
+        query = query.filter_by(project_type=selected_category)
+
+    projects = query.order_by(Project.created_at.desc()).all()
+    return render_template(
+        'projects.html',
+        projects=projects,
+        selected_category=selected_category
+    )
+
+
+@app.route('/projects/mine')
+@login_required
+def my_projects():
+    selected_category = request.args.get('category', 'All')
+
+    query = Project.query.filter_by(owner_id=current_user.id)
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Project.project_type.notin_(BASE_PROJECT_CATEGORIES))
+    else:
+        query = query.filter_by(project_type=selected_category)
+
+    projects = query.order_by(Project.created_at.desc()).all()
+    return render_template(
+        'projects.html',
+        projects=projects,
+        selected_category=selected_category,
+        mine=True
+    )
 
 
 @app.route('/projects/create', methods=['GET', 'POST'])
@@ -226,16 +306,25 @@ def project_list():
 def create_project():
     form = ProjectForm()
     if form.validate_on_submit():
+        if form.project_type.data == "Other":
+            if not form.other_project_type.data or not form.other_project_type.data.strip():
+                form.other_project_type.errors.append("Please specify the category.")
+                return render_template('project_create.html', form=form)
+            category_to_save = form.other_project_type.data.strip()
+        else:
+            category_to_save = form.project_type.data
+
         project = Project(
             title=form.title.data,
             description=form.description.data,
             skills_required=form.skills_required.data,
-            project_type=form.project_type.data,
+            project_type=category_to_save,
             owner_id=current_user.id
         )
         db.session.add(project)
         db.session.commit()
         return redirect(url_for('project_list'))
+
     return render_template('project_create.html', form=form)
 
 
@@ -253,8 +342,45 @@ def project_detail(project_id):
 @app.route('/forum')
 @login_required
 def forum():
-    threads = Thread.query.order_by(Thread.created_at.desc()).all()
-    return render_template('forum.html', threads=threads)
+    selected_category = request.args.get('category', 'All')
+
+    query = Thread.query
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Thread.category.notin_(BASE_THREAD_CATEGORIES))
+    else:
+        query = query.filter_by(category=selected_category)
+
+    threads = query.order_by(Thread.created_at.desc()).all()
+    return render_template(
+        'forum.html',
+        threads=threads,
+        selected_category=selected_category,
+        mine=False  # <— this tells the template we’re in “all threads” mode
+    )
+
+
+@app.route('/forum/mine')
+@login_required
+def my_threads():
+    selected_category = request.args.get('category', 'All')
+
+    query = Thread.query.filter_by(creator_id=current_user.id)
+    if selected_category == 'All':
+        pass
+    elif selected_category == 'Other':
+        query = query.filter(Thread.category.notin_(BASE_THREAD_CATEGORIES))
+    else:
+        query = query.filter_by(category=selected_category)
+
+    threads = query.order_by(Thread.created_at.desc()).all()
+    return render_template(
+        'forum.html',
+        threads=threads,
+        selected_category=selected_category,
+        mine=True  # <— tells template we’re in “my threads” mode
+    )
 
 
 @app.route('/forum/create', methods=['GET', 'POST'])
@@ -262,14 +388,25 @@ def forum():
 def create_thread():
     form = ThreadForm()
     if form.validate_on_submit():
+        # Decide what category to save
+        if form.category.data == "Other":
+            # make sure user actually typed something
+            if not form.other_category.data or not form.other_category.data.strip():
+                form.other_category.errors.append("Please specify the category.")
+                return render_template('thread_create.html', form=form)
+            category_to_save = form.other_category.data.strip()
+        else:
+            category_to_save = form.category.data
+
         thread = Thread(
             title=form.title.data,
-            category=form.category.data,
+            category=category_to_save,
             creator_id=current_user.id
         )
         db.session.add(thread)
         db.session.commit()
         return redirect(url_for('forum'))
+
     return render_template('thread_create.html', form=form)
 
 

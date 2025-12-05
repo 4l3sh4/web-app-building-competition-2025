@@ -11,22 +11,50 @@
     <p><a href="{{ url_for('forum') }}">Back to Discussion Board</a></p>
 
     <form method="POST">
-        {{ form.hidden_tag() }}
+    {{ form.hidden_tag() }}
 
+    <p>
+        {{ form.title.label }}<br>
+        {{ form.title(size=60) }}
+        {% for error in form.title.errors %}
+            <span style="color:red;">{{ error }}</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        {{ form.category.label }}<br>
+        {{ form.category(id="category") }}
+    </p>
+
+    <div id="other-category-wrapper" style="display:none;">
         <p>
-            {{ form.title.label }}<br>
-            {{ form.title(size=60) }}
-            {% for error in form.title.errors %}
+            {{ form.other_category.label }}<br>
+            {{ form.other_category() }}
+            {% for error in form.other_category.errors %}
                 <span style="color:red;">{{ error }}</span>
             {% endfor %}
         </p>
+    </div>
 
-        <p>
-            {{ form.category.label }}<br>
-            {{ form.category(size=40) }}
-        </p>
+    <p>{{ form.submit() }}</p>
+</form>
 
-        <p>{{ form.submit() }}</p>
-    </form>
+<script>
+function toggleOtherCategory() {
+    var selectEl = document.getElementById('category');
+    var otherDiv = document.getElementById('other-category-wrapper');
+    if (selectEl.value === 'Other') {
+        otherDiv.style.display = 'block';
+    } else {
+        otherDiv.style.display = 'none';
+    }
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+    toggleOtherCategory();  // set initial state
+    document.getElementById('category').addEventListener('change', toggleOtherCategory);
+});
+</script>
+
 </body>
 </html>

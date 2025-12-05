@@ -6,10 +6,29 @@
     <title>Discussion Board</title>
 </head>
 <body>
-    <h1>Discussion Board</h1>
+    {% if mine %}
+        <h1>My Discussion Threads</h1>
+        <p><a href="{{ url_for('forum') }}">View all threads</a></p>
+    {% else %}
+        <h1>Discussion Board</h1>
+        <p><a href="{{ url_for('my_threads') }}">View only my threads</a></p>
+    {% endif %}
 
     <p><a href="{{ url_for('home') }}">Back to Home</a></p>
     <p><a href="{{ url_for('create_thread') }}">+ Start New Thread</a></p>
+
+    <form method="get">
+        <label for="category">Filter by category:</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+            <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
+            <option value="Find Team" {% if selected_category == 'Find Team' %}selected{% endif %}>Find Team</option>
+            <option value="Ask for Help" {% if selected_category == 'Ask for Help' %}selected{% endif %}>Ask for Help</option>
+            <option value="Share Resources" {% if selected_category == 'Share Resources' %}selected{% endif %}>Share Resources</option>
+            <option value="General Discussion" {% if selected_category == 'General Discussion' %}selected{% endif %}>General Discussion</option>
+            <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+    </form>
+
 
     {% if threads %}
         <ul>
@@ -22,12 +41,15 @@
                         ({{ thread.category }})
                     {% endif %}
                     <br>
-                    <small>Created on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    <small>
+                        Started by {{ thread.creator.username }}
+                        on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </small>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>No threads yet. Start the first discussion!</p>
+        <p>No threads found for this category.</p>
     {% endif %}
 </body>
 </html>
