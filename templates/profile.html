@@ -6,8 +6,8 @@
     <title>Profile</title>
 </head>
 <body>
-    <h1>Welcome, {{ user.username }}!</h1>
-    <p>You are logged in as: <strong>{{ user.role|capitalize }}</strong></p>
+    <h1>Welcome, {{ current_user.username }}!</h1>
+    <p>You are logged in as: <strong>{{ current_user.role|capitalize }}</strong></p>
 
     {% if user.role == 'student' %}
         <p>This is the student profile section (later you can show student features here).</p>

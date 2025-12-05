@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -30,6 +30,89 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'student' or 'mentor'
 
+    # one-to-one relationships
+    student_profile = db.relationship('StudentProfile', backref='user', uselist=False)
+    mentor_profile = db.relationship('MentorProfile', backref='user', uselist=False)
+
+FACULTIES = [
+    ('fci', 'Faculty of Computing & Informatics (FCI)'),
+    ('faie', 'Faculty of Artificial Intelligence & Engineering (FAIE)')
+]
+
+PROGRAMME_LABELS = {
+    'fci': [
+        ('bcs', 'Bachelor of Computer Science (Hons.)'),
+        ('bit', 'Bachelor of Information Technology (Hons.) (Information Systems)'),
+        ('dit', 'Diploma in Information Technology'),
+    ],
+
+    'faie': [
+        ('be', 'Bachelor of Engineering (Hons.)'),
+        ('bs', 'Bachelor of Science (Hons.)'),
+    ]
+}
+
+SPECIALIZATION_CHOICES = {
+    'bcs': [
+        ('cyber', 'Cybersecurity'),
+        ('se', 'Software Engineering'),
+        ('ds', 'Data Science'),
+        ('game', 'Game Development'),
+    ],
+    'be': [
+        ('electrical', 'Electrical'),
+        ('electronics', 'Electronics'),
+        ('et', 'Electronic majoring in Telecommunication'),
+        ('ec', 'Electronic majoring in Computer'),
+    ],
+    'bs': [
+        ('ai', 'Applied Artificial Intelligence'),
+        ('ir', 'Intelligent Robotics'),
+    ],
+}
+
+YEAR_CHOICES = [
+    ('1', 'Year 1'),
+    ('2', 'Year 2'),
+    ('3', 'Year 3'),
+    ('4', 'Year 4'),
+]
+
+class StudentProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id'),
+        nullable=False,
+        unique=True
+    )
+
+    full_name = db.Column(db.String(100), nullable=False)
+
+    faculty = db.Column(db.String(10), nullable=False)      # 'fci', 'faie'
+    programme = db.Column(db.String(10), nullable=False)    # 'bcs', 'bit', 'dit', 'be', 'bs'
+    year = db.Column(db.Integer, nullable=False)            
+
+    specialization = db.Column(db.String(20), nullable=True)  
+
+    interests = db.Column(db.Text)      
+    skills = db.Column(db.Text)
+    bio = db.Column(db.Text)
+
+
+class MentorProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+
+    full_name = db.Column(db.String(100), nullable=False)
+    position = db.Column(db.String(100))         
+    department = db.Column(db.String(100))
+
+    expertise = db.Column(db.Text)               
+    research_interests = db.Column(db.Text)
+    office_location = db.Column(db.String(100))
+    contact_method = db.Column(db.String(150))   # email or link
+    max_mentees = db.Column(db.Integer)
 
 class Project(db.Model):
     """Project & Opportunities Board entries"""
@@ -58,7 +141,6 @@ class Post(db.Model):
     thread_id = db.Column(db.Integer, db.ForeignKey('thread.id'), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -181,10 +263,60 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('login'))
+        login_user(new_user)
+
+        # Then redirect to profile setup
+        if new_user.role == 'student':
+            return redirect(url_for('setup_student_profile'))
+        else:
+            return redirect(url_for('setup_mentor_profile'))
 
     return render_template('register.html', form=form)
 
+@app.route('/student/profile/setup', methods=['GET', 'POST'])
+@login_required
+def setup_student_profile():
+    if current_user.role != 'student':
+        return redirect(url_for('home'))  # you don't have 'index', so use 'home'
+
+    profile = StudentProfile.query.filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        faculty = request.form.get('faculty')          # 'fci' / 'faie'
+        programme = request.form.get('programme')      # 'bcs' / 'bit' / ...
+        year = int(request.form.get('year'))           # '1' -> 1
+        specialization = request.form.get('specialization') or None
+        interests = request.form.get('interests')
+        skills = request.form.get('skills')
+        bio = request.form.get('bio')
+
+        if not profile:
+            profile = StudentProfile(user_id=current_user.id)
+
+        profile.full_name = full_name
+        profile.faculty = faculty
+        profile.programme = programme
+        profile.year = year
+        profile.specialization = specialization
+        profile.interests = interests
+        profile.skills = skills
+        profile.bio = bio
+
+        db.session.add(profile)
+        db.session.commit()
+
+        return redirect(url_for('profile'))
+
+    # GET: show form with existing values if profile exists
+    return render_template(
+        'student_profile_form.html',
+        profile=profile,
+        FACULTIES=FACULTIES,
+        PROGRAMME_LABELS=PROGRAMME_LABELS,
+        YEAR_CHOICES=YEAR_CHOICES,
+        SPECIALIZATION_CHOICES=SPECIALIZATION_CHOICES,
+    )
 
 @app.route('/profile')
 @login_required

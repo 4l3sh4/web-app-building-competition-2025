@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    <h1>Welcome, {{ current_user.username }}!</h1>
+    <p>You are logged in as: <strong>{{ current_user.role|capitalize }}</strong></p>
+
+    <form method="POST">
+    <label>Full Name</label>
+    <input type="text" name="full_name"
+            value="{{ profile.full_name if profile else '' }}" required>
+
+    <!-- Faculty dropdown -->
+    <label>Faculty</label>
+    <select name="faculty" id="faculty" required>
+        {% for value, label in FACULTIES %}
+        <option value="{{ value }}"
+            {% if profile and profile.faculty == value %}selected{% endif %}>
+            {{ label }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <!-- Programme dropdown (you can make it depend on faculty with JS later) -->
+    <label>Programme</label>
+    <select name="programme" id="programme" required>
+        <!-- Example: show all for now, or filter by faculty with JS -->
+        {% for fac, programmes in PROGRAMME_LABELS.items() %}
+        {% for value, label in programmes %}
+            <option value="{{ value }}"
+            {% if profile and profile.programme == value %}selected{% endif %}>
+            {{ label }}
+            </option>
+        {% endfor %}
+        {% endfor %}
+    </select>
+
+    <!-- Year -->
+    <label>Year of Study</label>
+    <select name="year" id="year" required>
+        {% for y in [1,2,3,4] %}
+        <option value="{{ y }}"
+            {% if profile and profile.year == y %}selected{% endif %}>
+            Year {{ y }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <!-- Specialization (you can hide/show this with JS) -->
+    <div id="specialization-wrapper">
+        <label>Specialization</label>
+        <select name="specialization" id="specialization">
+        <option value="">-- None / Not Applicable --</option>
+        {# you can fill this with JS based on programme #}
+        </select>
+    </div>
+
+    <!-- Interests, skills, bio -->
+    <label>Interests</label>
+    <textarea name="interests">{{ profile.interests if profile else '' }}</textarea>
+
+    <label>Skills</label>
+    <textarea name="skills">{{ profile.skills if profile else '' }}</textarea>
+
+    <label>Bio</label>
+    <textarea name="bio">{{ profile.bio if profile else '' }}</textarea>
+
+    <button type="submit">Save Profile</button>
+    </form>
+
+    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
+    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
+    <a href="{{ url_for('logout') }}">Press here to logout</a>
+</body>
+</html>
