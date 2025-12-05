@@ -44,6 +44,27 @@ class Project(db.Model):
     owner = db.relationship('User', backref='projects')
 
 
+class ProjectMember(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User')
+    project = db.relationship('Project', backref='members')
+
+
+class ProjectMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    author = db.relationship('User')
+    project = db.relationship('Project', backref='messages')
+
+
 class Thread(db.Model):
     """Discussion threads"""
     id = db.Column(db.Integer, primary_key=True)
@@ -164,6 +185,14 @@ class ProjectForm(FlaskForm):
         render_kw={"placeholder": "e.g. Outreach, Admin Task"}
     )
     submit = SubmitField("Create")
+
+
+class ProjectMessageForm(FlaskForm):
+    content = TextAreaField(
+        "Message",
+        validators=[InputRequired()]
+    )
+    submit = SubmitField("Send")
 
 
 class ThreadForm(FlaskForm):
@@ -332,8 +361,94 @@ def create_project():
 @login_required
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
-    # If you want owner username, you could look it up here later
-    return render_template('project_detail.html', project=project)
+
+    membership = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    member_count = ProjectMember.query.filter_by(project_id=project.id).count()
+
+    return render_template(
+        'project_detail.html',
+        project=project,
+        is_member=bool(membership),
+        member_count=member_count
+    )
+
+
+@app.route('/projects/<int:project_id>/join')
+@login_required
+def join_project(project_id):
+    project = Project.query.get_or_404(project_id)
+
+    existing = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    if not existing:
+        membership = ProjectMember(project_id=project.id, user_id=current_user.id)
+        db.session.add(membership)
+        db.session.commit()
+
+    # after joining, go straight to chat
+    return redirect(url_for('project_chat', project_id=project.id))
+
+
+@app.route('/projects/<int:project_id>/leave')
+@login_required
+def leave_project(project_id):
+    membership = ProjectMember.query.filter_by(
+        project_id=project_id,
+        user_id=current_user.id
+    ).first()
+
+    if membership:
+        db.session.delete(membership)
+        db.session.commit()
+
+    return redirect(url_for('project_detail', project_id=project_id))
+
+
+@app.route('/projects/<int:project_id>/chat', methods=['GET', 'POST'])
+@login_required
+def project_chat(project_id):
+    project = Project.query.get_or_404(project_id)
+
+    # user must be a member – if not, auto-join
+    membership = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    if not membership:
+        membership = ProjectMember(project_id=project.id, user_id=current_user.id)
+        db.session.add(membership)
+        db.session.commit()
+
+    form = ProjectMessageForm()
+    if form.validate_on_submit():
+        msg = ProjectMessage(
+            project_id=project.id,
+            author_id=current_user.id,
+            content=form.content.data
+        )
+        db.session.add(msg)
+        db.session.commit()
+        return redirect(url_for('project_chat', project_id=project.id))
+
+    messages = ProjectMessage.query.filter_by(project_id=project.id) \
+                                   .order_by(ProjectMessage.created_at.asc()).all()
+    members = ProjectMember.query.filter_by(project_id=project.id).all()
+
+    return render_template(
+        'project_chat.html',
+        project=project,
+        form=form,
+        messages=messages,
+        members=members
+    )
 
 
 # ---------------------
