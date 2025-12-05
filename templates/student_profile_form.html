@@ -25,10 +25,9 @@
         {% endfor %}
     </select>
 
-    <!-- Programme dropdown (you can make it depend on faculty with JS later) -->
-    <label>Programme</label>
+    <!-- Programme dropdown -->
+    <!-- <label>Programme</label>
     <select name="programme" id="programme" required>
-        <!-- Example: show all for now, or filter by faculty with JS -->
         {% for fac, programmes in PROGRAMME_LABELS.items() %}
         {% for value, label in programmes %}
             <option value="{{ value }}"
@@ -37,7 +36,14 @@
             </option>
         {% endfor %}
         {% endfor %}
-    </select>
+    </select> -->
+
+    <div id="programme-wrapper">
+        <label>Programme</label>
+        <select name="programme" id="programme" required>
+            <option value="">-- Choose one --</option>
+        </select>
+    </div>
 
     <!-- Year -->
     <label>Year of Study</label>
@@ -50,12 +56,11 @@
         {% endfor %}
     </select>
 
-    <!-- Specialization (you can hide/show this with JS) -->
-    <div id="specialization-wrapper">
+    <!-- Specialization -->
+    <div id="specialization-wrapper" style="display: none;">
         <label>Specialization</label>
         <select name="specialization" id="specialization">
-        <option value="">-- None / Not Applicable --</option>
-        {# you can fill this with JS based on programme #}
+         <option value="">-- Choose one --</option>
         </select>
     </div>
 
@@ -75,5 +80,13 @@
     <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
     <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
     <a href="{{ url_for('logout') }}">Press here to logout</a>
+
+    <script>
+        window.PROGRAMME_LABELS = {{ PROGRAMME_LABELS | tojson | safe }};
+        window.SPECIALIZATION_CHOICES = {{ SPECIALIZATION_CHOICES | tojson | safe }};
+        window.CURRENT_PROGRAMME = "{{ profile.programme if profile else '' }}";
+        window.CURRENT_SPEC = "{{ profile.specialization if profile and profile.specialization else '' }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/studentsetup.js') }}"></script>
 </body>
 </html>

@@ -79,18 +79,16 @@ YEAR_CHOICES = [
 ]
 
 class StudentProfile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('user.id'),
-        nullable=False,
-        unique=True
+        primary_key=True
     )
 
     full_name = db.Column(db.String(100), nullable=False)
 
-    faculty = db.Column(db.String(10), nullable=False)      # 'fci', 'faie'
-    programme = db.Column(db.String(10), nullable=False)    # 'bcs', 'bit', 'dit', 'be', 'bs'
+    faculty = db.Column(db.String(10), nullable=False)      
+    programme = db.Column(db.String(10), nullable=False)    
     year = db.Column(db.Integer, nullable=False)            
 
     specialization = db.Column(db.String(20), nullable=True)  
@@ -277,15 +275,15 @@ def register():
 @login_required
 def setup_student_profile():
     if current_user.role != 'student':
-        return redirect(url_for('home'))  # you don't have 'index', so use 'home'
+        return redirect(url_for('home'))  
 
     profile = StudentProfile.query.filter_by(user_id=current_user.id).first()
 
     if request.method == 'POST':
         full_name = request.form.get('full_name')
-        faculty = request.form.get('faculty')          # 'fci' / 'faie'
-        programme = request.form.get('programme')      # 'bcs' / 'bit' / ...
-        year = int(request.form.get('year'))           # '1' -> 1
+        faculty = request.form.get('faculty')          
+        programme = request.form.get('programme')      
+        year = int(request.form.get('year'))          
         specialization = request.form.get('specialization') or None
         interests = request.form.get('interests')
         skills = request.form.get('skills')
