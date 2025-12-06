@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    <h1>Welcome, {{ current_user.username }}!</h1>
+    <p>You are logged in as: <strong>{{ current_user.role|capitalize }}</strong></p>
+
+    <form method="POST">
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+
+    <label>Full Name</label>
+    <input type="text" name="full_name"
+            value="{{ profile.full_name if profile else '' }}" required>
+
+    <label>Position</label>
+    <select name="position" required>
+        <option value="">-- Select Position --</option>
+        {% for p in POSITION_CHOICES %}
+        <option value="{{ p }}"
+            {% if profile and profile.position == p %}selected{% endif %}>
+            {{ p }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label>Faculty</label>
+    <select name="faculty" required>
+        <option value="">-- Select Faculty --</option>
+        {% for value, label in FACULTIES %}
+            <option value="{{ value }}"
+                {% if profile and profile.faculty == value %}selected{% endif %}>
+                {{ label }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <label>Expertise</label>
+    <select name="expertise" required>
+        <option value="">-- Select Expertise --</option>
+        {% for e in EXPERTISE_CHOICES %}
+        <option value="{{ e }}"
+            {% if profile and profile.expertise == e %}selected{% endif %}>
+            {{ e }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label>Office Location</label>
+    <input type="text" name="office_location"
+            value="{{ profile.office_location if profile else '' }}">
+
+    <label>LinkedIn Profile</label>
+    <input type="url" name="linkedin_profile"
+            placeholder="https://www.linkedin.com/in/username"
+            value="{{ profile.linkedin_profile if profile else '' }}">
+
+    <button type="submit">Save</button>
+    </form>
+
+    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
+    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
+    <a href="{{ url_for('logout') }}">Press here to logout</a>
+
+</body>
+</html>

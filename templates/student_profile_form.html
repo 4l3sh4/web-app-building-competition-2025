@@ -25,19 +25,6 @@
         {% endfor %}
     </select>
 
-    <!-- Programme dropdown -->
-    <!-- <label>Programme</label>
-    <select name="programme" id="programme" required>
-        {% for fac, programmes in PROGRAMME_LABELS.items() %}
-        {% for value, label in programmes %}
-            <option value="{{ value }}"
-            {% if profile and profile.programme == value %}selected{% endif %}>
-            {{ label }}
-            </option>
-        {% endfor %}
-        {% endfor %}
-    </select> -->
-
     <div id="programme-wrapper">
         <label>Programme</label>
         <select name="programme" id="programme" required>

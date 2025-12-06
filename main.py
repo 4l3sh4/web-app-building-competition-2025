@@ -121,6 +121,31 @@ YEAR_CHOICES = [
     ('4', 'Year 4'),
 ]
 
+EXPERTISE_CHOICES = [
+    "Artificial Intelligence & Machine Learning",
+    "Data Science & Analytics",
+    "Cybersecurity & Digital Forensics",
+    "Software & Application Development",
+    "Algorithms & High Performance Computing",
+    "Graphics, Games & Image Processing",
+    "IoT & Embedded Systems",
+    "Biotechnology & Bioinformatics",
+    "Electronics & Electrical Engineering",
+    "Mechanical & Manufacturing Engineering",
+    "Physics & Photonics",
+    "Sensors & Instrumentation",
+    "Robotics & Control Systems",
+    "Communication Systems & Wireless Technologies",
+]
+
+POSITION_CHOICES = [
+    "Lecturer",
+    "Senior Lecturer",
+    "Assistant Professor",
+    "Associate Professor",
+    "Specialist 2",
+]
+
 class StudentProfile(db.Model):
     user_id = db.Column(
         db.Integer,
@@ -138,20 +163,18 @@ class StudentProfile(db.Model):
 
     bio = db.Column(db.Text)
 
-
 class MentorProfile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    user_id = db.Column(
+        db.Integer, 
+        db.ForeignKey('user.id'), 
+        primary_key=True)
 
     full_name = db.Column(db.String(100), nullable=False)
-    position = db.Column(db.String(100))         
-    department = db.Column(db.String(100))
-
-    expertise = db.Column(db.Text)               
-    research_interests = db.Column(db.Text)
-    office_location = db.Column(db.String(100))
-    contact_method = db.Column(db.String(150))   # email or link
-    max_mentees = db.Column(db.Integer)
+    position = db.Column(db.String(10), nullable=False)          
+    faculty = db.Column(db.String(10), nullable=False)           
+    expertise = db.Column(db.String(150), nullable=False)         
+    office_location = db.Column(db.String(50))
+    linkedin_profile = db.Column(db.String(255))  
 
 class Project(db.Model):
     """Project & Opportunities Board entries"""
@@ -461,6 +484,57 @@ def edit_student_profile():
         PROGRAMME_LABELS=PROGRAMME_LABELS,
         YEAR_CHOICES=YEAR_CHOICES,
         SPECIALIZATION_CHOICES=SPECIALIZATION_CHOICES,
+    )
+
+@app.route('/mentor/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_mentor_profile():
+    if current_user.role != 'mentor':
+        return redirect(url_for('home'))
+
+    profile = MentorProfile.query.filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        position = request.form.get('position')
+        faculty = request.form.get('faculty')
+        expertise = request.form.get('expertise')
+        office_location = request.form.get('office_location') or None
+        linkedin_profile = request.form.get('linkedin_profile') or None
+
+        if not (full_name and position and faculty and expertise):
+            error = "Please fill in all required fields."
+            return render_template(
+                'mentor_profile_form.html',
+                profile=profile,
+                FACULTIES=FACULTIES,
+                EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+                POSITION_CHOICES=POSITION_CHOICES,
+                error=error,
+            )
+
+        if not profile:
+            profile = MentorProfile(user_id=current_user.id)
+
+        profile.full_name = full_name.strip()
+        profile.position = position
+        profile.faculty = faculty
+        profile.expertise = expertise
+        profile.office_location = office_location.strip() if office_location else None
+        profile.linkedin_profile = linkedin_profile.strip() if linkedin_profile else None
+
+        db.session.add(profile)
+        db.session.commit()
+
+        return redirect(url_for('profile')) 
+
+    # GET: show form with existing values if profile exists
+    return render_template(
+        'mentor_profile_form.html',
+        profile=profile,
+        FACULTIES=FACULTIES,
+        EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+        POSITION_CHOICES=POSITION_CHOICES,
     )
 
 @app.route('/profile')
