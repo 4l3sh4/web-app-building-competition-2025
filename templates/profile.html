@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
+    <title>Profile</title>
+</head>
+<body>
+    {% if is_self is defined and is_self %}
+        <h1>Welcome, {{ user.username }}!</h1>
+        <p>You are logged in as: <strong>{{ user.role|capitalize }}</strong></p>
+    {% else %}
+        <h1>{{ user.username }}'s Profile</h1>
+        <p>Role: <strong>{{ user.role|capitalize }}</strong></p>
+    {% endif %}
+
+    {% if user.role == 'student' %}
+        <p>This is the student profile section (later you can show student features here).</p>
+    {% elif user.role == 'mentor' %}
+        <p>This is the mentor profile section (later you can show mentor features here).</p>
+    {% endif %}
+
+    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
+    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
+
+    {% if is_self is defined and is_self %}
+        <a href="{{ url_for('logout') }}">Press here to logout</a>
+    {% endif %}
+</body>
+</html>
