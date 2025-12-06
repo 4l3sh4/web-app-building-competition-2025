@@ -21,7 +21,7 @@
     <div class="projects-wrapper">
         <div class="projects-header">
             <h1>My Discussion Threads</h1>
-            <a href="{{ url_for('my_threads') }}" class="pill-text pill-text-blue">View all threads</a>
+            <a href="{{ url_for('forum') }}" class="pill-text pill-text-blue">View all threads</a>
     {% else %}
 
     <div class="projects-wrapper">
@@ -35,15 +35,16 @@
             </div>
         </div>
 
-    <p>
+    <h3>
         Sort:
-        <a href="{{ url_for('forum', category=selected_category, sort='new') }}">
+        <a href="{{ url_for('forum', category=selected_category, sort='new') }}" class="pill-text pill-text-blue">
             {% if sort == 'new' %}<strong>New</strong>{% else %}New{% endif %}
-        </a> |
-        <a href="{{ url_for('forum', category=selected_category, sort='top') }}">
+        </a>
+        <a href="{{ url_for('forum', category=selected_category, sort='top') }}" class="pill-text pill-text-blue">
             {% if sort == 'top' %}<strong>Top</strong>{% else %}Top{% endif %}
         </a>
-    </p>
+    </h3>
+    <br>
 
     <form method="get">
         <label for="category">Filter by category:</label>

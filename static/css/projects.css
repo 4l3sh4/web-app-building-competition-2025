@@ -177,6 +177,19 @@ html.dark-mode .project-card:hover .project-type {
 	flex-grow: 1;
 }
 
+.reply-count-badge {
+	background: var(--accent-2);
+	color: white;
+	padding: 4px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+html.dark-mode .reply-count-badge {
+	background: var(--accent-1);
+}
+
 /* Empty State */
 .empty-state {
 	background: var(--card-bg);
@@ -274,4 +287,3 @@ html.dark-mode .btn-ghost:hover {
 	background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
 	color: white;
 }
-

@@ -19,10 +19,10 @@
         <div class="projects-header">
             {% if mine %}
                 <h1>My Projects & Opportunities</h1>
-                <p><a href="{{ url_for('project_list') }}" class="pill-text pill-text-blue">View all projects</a></p>
+                <a href="{{ url_for('project_list') }}" class="pill-text pill-text-blue">View all projects</a>
             {% else %}
                 <h1>Projects & Opportunities Board</h1>
-                <p><a href="{{ url_for('my_projects') }}" class="pill-text pill-text-blue">View only my projects</a></p>
+                <a href="{{ url_for('my_projects') }}" class="pill-text pill-text-blue">View only my projects</a>
             {% endif %}
 
             <div class="projects-nav">
@@ -44,7 +44,7 @@
             <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
         </select>
     </form>
-
+    <br>
     {% if projects %}
         <div class="projects-grid">
             {% for project in projects %}
@@ -53,10 +53,8 @@
                         <div class="project-type">{{ project.project_type }}</div>
                     {% endif %}
                     <h3>{{ project.title }}</h3>
-                    <p class="project-excerpt">{{ project.description|truncate(220) }}</p><br>
-                    <a href="{{ url_for('view_user', user_id=project.owner.id) }}"> {{ project.owner.username }} </a>
-                    · {{ project.created_at.strftime('%Y-%m-%d') }}
-                    <div class="reply-count-badge">{{ project.messages|length if project.messages else 0 }}</div>
+                    <p class="project-excerpt">{{ project.description|truncate(220) }}</p>
+                    Posted by {{ project.owner.username }} · {{ project.created_at.strftime('%Y-%m-%d') }}
                 </a>
             {% endfor %}
         </div>
