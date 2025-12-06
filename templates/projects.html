@@ -11,45 +11,61 @@
     <title>Projects & Opportunities</title>
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+    {% if mine %}
+        <h1>My Projects & Opportunities</h1>
+        <p><a href="{{ url_for('project_list') }}">View all projects</a></p>
+    {% else %}
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
         <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
     </button>
     
     <div class="projects-wrapper">
         <div class="projects-header">
             <h1>Projects & Opportunities Board</h1>
+        <p><a href="{{ url_for('my_projects') }}">View only my projects</a></p>
+    {% endif %}
             <div class="projects-nav">
                 <a href="{{ url_for('home') }}" class="btn btn-ghost">← Back to Home</a>
                 <a href="{{ url_for('create_project') }}" class="btn btn-primary">+ Create New Project</a>
             </div>
         </div>
 
-        {% if projects %}
-            <div class="projects-grid">
-                {% for project in projects %}
-                    <a href="{{ url_for('project_detail', project_id=project.id) }}" class="project-card">
-                        <h3>{{ project.title }}</h3>
-                        
-                        {% if project.project_type %}
-                            <span class="project-type">{{ project.project_type }}</span>
-                        {% endif %}
+    <!-- Filter form -->
+    <form method="get">
+        <label for="category">Filter by category:</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+            <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
+            <option value="Competition" {% if selected_category == 'Competition' %}selected{% endif %}>Competition</option>
+            <option value="Research" {% if selected_category == 'Research' %}selected{% endif %}>Research</option>
+            <option value="Final Year Project" {% if selected_category == 'Final Year Project' %}selected{% endif %}>Final Year Project</option>
+            <option value="Personal Project" {% if selected_category == 'Personal Project' %}selected{% endif %}>Personal Project</option>
+            <option value="Event / Initiative" {% if selected_category == 'Event / Initiative' %}selected{% endif %}>Event / Initiative</option>
+            <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+    </form>
 
-                        {% if project.description %}
-                            <p class="project-excerpt">{{ project.description|truncate(200) }}</p>
-                        {% endif %}
-                        
-                        <div class="project-meta">
-                            <span>Posted on {{ project.created_at.strftime('%Y-%m-%d') }}</span>
-                        </div>
+    {% if projects %}
+        <ul>
+            {% for project in projects %}
+                <li>
+                    <div>
+                        <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
+                            {{ project.owner.username }}
+                        </a>
+                        · {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+
+                    <a href="{{ url_for('project_detail', project_id=project.id) }}">
+                        <strong>{{ project.title }}</strong>
                     </a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <p>No projects yet. Be the first to create one!</p>
-                <a href="{{ url_for('create_project') }}" class="btn btn-primary">Create Project</a>
-            </div>
-        {% endif %}
-    </div>
+                    {% if project.project_type %}
+                        ({{ project.project_type }})
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No projects found for this category.</p>
+    {% endif %}
 </body>
 </html>

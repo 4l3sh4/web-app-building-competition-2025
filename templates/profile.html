@@ -7,8 +7,13 @@
     <title>Profile</title>
 </head>
 <body>
-    <h1>Welcome, {{ user.username }}!</h1>
-    <p>You are logged in as: <strong>{{ user.role|capitalize }}</strong></p>
+    {% if is_self is defined and is_self %}
+        <h1>Welcome, {{ user.username }}!</h1>
+        <p>You are logged in as: <strong>{{ user.role|capitalize }}</strong></p>
+    {% else %}
+        <h1>{{ user.username }}'s Profile</h1>
+        <p>Role: <strong>{{ user.role|capitalize }}</strong></p>
+    {% endif %}
 
     {% if user.role == 'student' %}
         <p>This is the student profile section (later you can show student features here).</p>
@@ -18,6 +23,9 @@
 
     <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
     <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
-    <a href="{{ url_for('logout') }}">Press here to logout</a>
+
+    {% if is_self is defined and is_self %}
+        <a href="{{ url_for('logout') }}">Press here to logout</a>
+    {% endif %}
 </body>
 </html>

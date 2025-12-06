@@ -14,57 +14,69 @@
 </head>
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+    {% if mine %}
+        <h1>My Discussion Threads</h1>
+        <p><a href="{{ url_for('forum') }}">View all threads</a></p>
+    {% else %}
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
         <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
     </button>
 
     <div class="projects-wrapper">
         <div class="projects-header">
             <h1>Discussion Board</h1>
+        <p><a href="{{ url_for('my_threads') }}">View only my threads</a></p>
+    {% endif %}
             <div class="projects-nav">
                 <a href="{{ url_for('home') }}" class="btn btn-ghost">← Back to Home</a>
                 <a href="{{ url_for('create_thread') }}" class="btn btn-primary">+ Start New Thread</a>
             </div>
         </div>
 
-        {% if threads %}
-            <div class="projects-grid">
-                {% for thread in threads %}
-                    <a href="{{ url_for('thread_detail', thread_id=thread.id) }}" class="project-card">
-                        <h3>{{ thread.title }}</h3>
-                        {% if thread.category %}
-                            <span class="project-type">{{ thread.category }}</span>
-                        {% endif %}
-                        {% if thread.body %}
-                            <p class="project-excerpt">{{ thread.body|striptags|truncate(200) }}</p>
-                        {% endif %}
-                        <div class="project-meta">
-                            <span class="meta-left">
-                                {% if thread.author %}
-                                    By {{ thread.author.username }}
-                                {% elif thread.user %}
-                                    By {{ thread.user.username }}
-                                {% elif thread.created_by %}
-                                    By {{ thread.created_by }}
-                                {% else %}
-                                    By Unknown
-                                {% endif %}
-                            </span>
+    <p>
+        Sort:
+        <a href="{{ url_for('forum', category=selected_category, sort='new') }}">
+            {% if sort == 'new' %}<strong>New</strong>{% else %}New{% endif %}
+        </a> |
+        <a href="{{ url_for('forum', category=selected_category, sort='top') }}">
+            {% if sort == 'top' %}<strong>Top</strong>{% else %}Top{% endif %}
+        </a>
+    </p>
 
-                            <span class="meta-right">
-                                <span class="reply-count-badge">{% if thread.replies is defined %}{{ thread.replies|length }}{% elif thread.reply_count is defined %}{{ thread.reply_count }}{% else %}0{% endif %}</span>
-                                <span class="posted">Posted on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
-                            </span>
-                        </div>
+    <form method="get">
+        <label for="category">Filter by category:</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+            <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
+            <option value="Find Team" {% if selected_category == 'Find Team' %}selected{% endif %}>Find Team</option>
+            <option value="Ask for Help" {% if selected_category == 'Ask for Help' %}selected{% endif %}>Ask for Help</option>
+            <option value="Share Resources" {% if selected_category == 'Share Resources' %}selected{% endif %}>Share Resources</option>
+            <option value="General Discussion" {% if selected_category == 'General Discussion' %}selected{% endif %}>General Discussion</option>
+            <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+        <input type="hidden" name="sort" value="{{ sort }}">
+    </form>
+
+    {% if threads %}
+        <ul>
+            {% for thread in threads %}
+                <li>
+                    <strong>[{{ thread.score or 0 }}]</strong>
+                    <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
+                        {{ thread.title }}
                     </a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-state">
-                <p>No threads yet. Start the first discussion!</p>
-                <a href="{{ url_for('create_thread') }}" class="btn btn-primary">Start Thread</a>
-            </div>
-        {% endif %}
-    </div>
+                    {% if thread.category %}
+                        ({{ thread.category }})
+                    {% endif %}
+                    <br>
+                    <small>
+                        Started by {{ thread.creator.username }}
+                        on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No threads found.</p>
+    {% endif %}
 </body>
 </html>

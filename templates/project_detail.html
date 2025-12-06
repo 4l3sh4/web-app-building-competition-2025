@@ -9,8 +9,16 @@
 <body>
     <h1>{{ project.title }}</h1>
 
+    <p>
+        Posted by
+        <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
+            {{ project.owner.username }}
+        </a>
+        on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+
     {% if project.project_type %}
-        <p><strong>Type:</strong> {{ project.project_type }}</p>
+        <p><strong>Category:</strong> {{ project.project_type }}</p>
     {% endif %}
 
     <p><strong>Description:</strong></p>
@@ -20,7 +28,32 @@
         <p><strong>Skills Required:</strong> {{ project.skills_required }}</p>
     {% endif %}
 
-    <p><strong>Posted on:</strong> {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    <strong>Members:</strong>
+
+    {% if members %}
+        <ul>
+            {% for m in members %}
+                <li>
+                    <a href="{{ url_for('view_user', user_id=m.user.id) }}">
+                        {{ m.user.username }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+
+    {% if is_member %}
+        <p>You have joined this project.</p>
+        <p>
+            <a href="{{ url_for('project_chat', project_id=project.id) }}">Go to Project Chat</a><br>
+            <a href="{{ url_for('leave_project', project_id=project.id) }}">Leave this Project</a>
+        </p>
+    {% else %}
+        <p>
+            <a href="{{ url_for('join_project', project_id=project.id) }}">Join this project</a>
+        </p>
+    {% endif %}
 
     <p><a href="{{ url_for('project_list') }}">Back to Project Board</a></p>
 </body>
