@@ -3,23 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/projects.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Projects & Opportunities</title>
 </head>
 <body>
-    {% if mine %}
-        <h1>My Projects & Opportunities</h1>
-        <p><a href="{{ url_for('project_list') }}">View all projects</a></p>
-    {% else %}
-        <h1>Projects & Opportunities Board</h1>
-        <p><a href="{{ url_for('my_projects') }}">View only my projects</a></p>
-    {% endif %}
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
-    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
-    <p><a href="{{ url_for('create_project') }}">+ Create New Project / Opportunity</a></p>
+    <div class="projects-wrapper">
+        <div class="projects-header">
+            {% if mine %}
+                <h1>My Projects & Opportunities</h1>
+                <a href="{{ url_for('project_list') }}" class="pill-text pill-text-blue">View all projects</a>
+            {% else %}
+                <h1>Projects & Opportunities Board</h1>
+                <a href="{{ url_for('my_projects') }}" class="pill-text pill-text-blue">View only my projects</a>
+            {% endif %}
+
+            <div class="projects-nav">
+                <a href="{{ url_for('home') }}" class="btn btn-ghost">← Back to Home</a>
+                <a href="{{ url_for('create_project') }}" class="btn btn-primary">+ Create New Project</a>
+            </div>
+        </div>
 
     <!-- Filter form -->
     <form method="get">
-        <label for="category">Filter by category:</label>
+        <h3><label for="category">Filter by category:</label></h3>
         <select name="category" id="category" onchange="this.form.submit()">
             <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
             <option value="Competition" {% if selected_category == 'Competition' %}selected{% endif %}>Competition</option>
@@ -30,29 +44,22 @@
             <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
         </select>
     </form>
-
+    <br>
     {% if projects %}
-        <ul>
+        <div class="projects-grid">
             {% for project in projects %}
-                <li>
-                    <div>
-                        <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
-                            {{ project.owner.username }}
-                        </a>
-                        · {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
-                    </div>
-
-                    <a href="{{ url_for('project_detail', project_id=project.id) }}">
-                        <strong>{{ project.title }}</strong>
-                    </a>
+                <a href="{{ url_for('project_detail', project_id=project.id) }}" class="project-card">
                     {% if project.project_type %}
-                        ({{ project.project_type }})
+                        <div class="project-type">{{ project.project_type }}</div>
                     {% endif %}
-                </li>
+                    <h3>{{ project.title }}</h3>
+                    <p class="project-excerpt">{{ project.description|truncate(220) }}</p>
+                    Posted by {{ project.owner.username }} · {{ project.created_at.strftime('%Y-%m-%d') }}
+                </a>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
-        <p>No projects found for this category.</p>
+        <div class="empty-state">No projects found for this category.</div>
     {% endif %}
 </body>
 </html>

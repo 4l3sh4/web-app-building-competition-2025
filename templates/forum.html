@@ -3,29 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/projects.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Discussion Board</title>
 </head>
+</head>
 <body>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
     {% if mine %}
-        <h1>My Discussion Threads</h1>
-        <p><a href="{{ url_for('forum') }}">View all threads</a></p>
+    <div class="projects-wrapper">
+        <div class="projects-header">
+            <h1>My Discussion Threads</h1>
+            <a href="{{ url_for('forum') }}" class="pill-text pill-text-blue">View all threads</a>
     {% else %}
-        <h1>Discussion Board</h1>
-        <p><a href="{{ url_for('my_threads') }}">View only my threads</a></p>
+
+    <div class="projects-wrapper">
+        <div class="projects-header">
+            <h1>Discussion Board</h1>
+            <a href="{{ url_for('my_threads') }}" class="pill-text pill-text-blue">View only my threads</a>
     {% endif %}
+            <div class="projects-nav">
+                <a href="{{ url_for('home') }}" class="btn btn-ghost">← Back to Home</a>
+                <a href="{{ url_for('create_thread') }}" class="btn btn-primary">+ Start New Thread</a>
+            </div>
+        </div>
 
-    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
-    <p><a href="{{ url_for('create_thread') }}">+ Start New Thread</a></p>
-
-    <p>
+    <h3>
         Sort:
-        <a href="{{ url_for('forum', category=selected_category, sort='new') }}">
+        <a href="{{ url_for('forum', category=selected_category, sort='new') }}" class="pill-text pill-text-blue">
             {% if sort == 'new' %}<strong>New</strong>{% else %}New{% endif %}
-        </a> |
-        <a href="{{ url_for('forum', category=selected_category, sort='top') }}">
+        </a>
+        <a href="{{ url_for('forum', category=selected_category, sort='top') }}" class="pill-text pill-text-blue">
             {% if sort == 'top' %}<strong>Top</strong>{% else %}Top{% endif %}
         </a>
-    </p>
+    </h3>
+    <br>
 
     <form method="get">
         <label for="category">Filter by category:</label>
@@ -43,20 +62,22 @@
     {% if threads %}
         <ul>
             {% for thread in threads %}
-                <li>
-                    <strong>[{{ thread.score or 0 }}]</strong>
-                    <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
-                        {{ thread.title }}
-                    </a>
-                    {% if thread.category %}
-                        ({{ thread.category }})
-                    {% endif %}
-                    <br>
-                    <small>
-                        Started by {{ thread.creator.username }}
-                        on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
-                    </small>
-                </li>
+                <div style="background: white; margin: 10px; padding: 10px; border-radius: 25px;">
+                    <li>
+                        <strong>[{{ thread.score or 0 }}]</strong>
+                        <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
+                            {{ thread.title }}
+                        </a>
+                        {% if thread.category %}
+                            ({{ thread.category }})
+                        {% endif %}
+                        <br>
+                        <small>
+                            Started by {{ thread.creator.username }}
+                            on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </small>
+                    </li>
+                </div>
             {% endfor %}
         </ul>
     {% else %}
