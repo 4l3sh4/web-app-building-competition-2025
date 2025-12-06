@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .card-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .profile-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .pfp {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .badge {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #444;
+            margin-left: 8px;
+        }
+        .badge-new {
+            border-color: red;
+        }
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- CONTAINER 1: BASIC INFO -->
+        <div class="card">
+            <div class="profile-row">
+                {% set pfp_filename = student_profile.pfp if student_profile.pfp else 'default_pfp.png' %}
+                <img src="{{ url_for('static', filename='assets/pfp/' ~ pfp_filename) }}"
+                    alt="Profile Picture"
+                    class="pfp">
+
+                <div>
+                    <!-- Full name + "Dashboard" -->
+                    <div class="card-header">
+                        {{ student_profile.full_name}}'s Dashboard
+                    </div>
+
+                    <!-- Programme full name -->
+                    <div>
+                        {{ programme_full }}
+                        {% if specialization_full %}
+                            · {{ specialization_full }}
+                        {% endif %}
+                    </div>
+
+                    <!-- Faculty | Year _ Student -->
+                    <div>
+                        {{ student_profile.faculty|upper }} | Year {{ student_profile.year }} Student
+                    </div>
+
+                    <br>
+
+                    <!-- Edit profile button -->
+                    <a href="{{ url_for('edit_student_profile') }}" class="btn">
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTAINER 2: MY PROJECTS -->
+        <div class="card">
+    <div class="card-header">My Projects</div>
+        {% if my_projects and my_projects|length > 0 %}
+            <ol style="padding-left: 20px; margin: 0;">
+                {% for project in my_projects %}
+                    <li style="margin-bottom: 6px;">
+                        <a 
+                            href="{{ url_for('project_detail', project_id=project.id) }}"
+                            style="text-decoration: none; font-weight: 500; color: #2a4d9b;"
+                        >
+                            {{ project.title }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p>You haven’t created any projects yet.</p>
+        {% endif %}
+    </div>
+
+
+
+        <!-- CONTAINER 3: MENTORSHIP REQUESTS -->
+        <div class="card">
+            <div class="card-header">My Mentorship Requests</div>
+
+            {% if mentorship_requests and mentorship_requests|length > 0 %}
+                <ul>
+                    {% for req in mentorship_requests %}
+                        <li>
+                            {# Lecturer name #}
+                            {{ req.mentor.full_name if req.mentor.full_name else req.mentor.username }}
+                            | Status: {{ req.status|capitalize }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>You haven’t sent any mentorship requests yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
+    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
+
+    {% if is_self is defined and is_self %}
+        <a href="{{ url_for('logout') }}">Press here to logout</a>
+    {% endif %}
+</body>
+</html>

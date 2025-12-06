@@ -418,7 +418,7 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
-                return redirect(url_for('profile'))
+                return redirect(url_for('dashboard'))
             else:
                 error_message = "Invalid password. Please try again."
         else:
@@ -490,11 +490,11 @@ def edit_student_profile():
         db.session.add(profile)
         db.session.commit()
 
-        return redirect(url_for('profile'))
+        return redirect(url_for('dashboard'))
 
     # GET: show form with existing values if profile exists
     return render_template(
-        'student_profile_form.html',
+        'edit_student.html',
         profile=profile,
         FACULTIES=FACULTIES,
         PROGRAMME_LABELS=PROGRAMME_LABELS,
@@ -521,7 +521,7 @@ def edit_mentor_profile():
         if not (full_name and position and faculty and expertise):
             error = "Please fill in all required fields."
             return render_template(
-                'mentor_profile_form.html',
+                'edit_mentor.html',
                 profile=profile,
                 FACULTIES=FACULTIES,
                 EXPERTISE_CHOICES=EXPERTISE_CHOICES,
@@ -552,16 +552,72 @@ def edit_mentor_profile():
         db.session.add(profile)
         db.session.commit()
 
-        return redirect(url_for('profile'))  
+        return redirect(url_for('dashboard'))  
 
     # GET: show form with existing values if profile exists
     return render_template(
-        'mentor_profile_form.html',
+        'edit_mentor.html',
         profile=profile,
         FACULTIES=FACULTIES,
         EXPERTISE_CHOICES=EXPERTISE_CHOICES,
         POSITION_CHOICES=POSITION_CHOICES,
     )
+
+def get_programme_full_name(code):
+    for fac, programmes in PROGRAMME_LABELS.items():
+        for short, full in programmes:
+            if short == code:
+                return full
+    return code  # fallback if not found
+
+def get_spec_full_name(code):
+    for fac, programmes in SPECIALIZATION_CHOICES.items():
+        for prog_code, specs in programmes.items():
+            for short, full in specs:
+                if short == code:
+                    return full
+    return code  # fallback if not found
+
+def get_faculty_full_name(code):
+    for short, full in FACULTIES:
+        if short == code:
+            return full
+    return code  # fallback if not found
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    if current_user.role == 'student':
+        student_profile = current_user.student_profile
+        programme_full = get_programme_full_name(student_profile.programme)
+        specialization_full = None
+        if student_profile.specialization:
+            specialization_full = get_spec_full_name(student_profile.specialization)
+        faculty_full = get_faculty_full_name(student_profile.faculty)
+
+        owned_projects = Project.query.filter_by(owner_id=current_user.id)
+        joined_project_ids = db.session.query(ProjectMember.project_id).filter_by(user_id=current_user.id)
+        joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
+        my_projects = owned_projects.union(joined_projects).order_by(Project.created_at.desc()).all()
+
+        return render_template(
+            'dashboard_student.html',
+            student_profile=student_profile,
+            user=current_user,
+            programme_full=programme_full,
+            specialization_full=specialization_full,
+            faculty_full=faculty_full,
+            my_projects=my_projects
+        )
+    elif current_user.role == 'mentor':
+        mentor_profile = current_user.mentor_profile
+
+        return render_template(
+            'dashboard_mentor.html',
+            mentor_profile=mentor_profile,
+            user=current_user
+        )
+    return redirect(url_for('login'))
 
 @app.route('/profile')
 @login_required
@@ -574,7 +630,7 @@ def profile():
 def view_user(user_id):
     user = User.query.get_or_404(user_id)
     is_self = (user.id == current_user.id)
-    return render_template('profile.html', user=user, is_self=is_self)
+    return render_template('dashboard.html', user=user, is_self=is_self)
 
 
 @app.route('/logout')
