@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Directory</title>
-    <style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/directory.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+    <!-- <style>
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -119,126 +123,166 @@
             display: block;
         }
 
-    </style>
+    </style> -->
 </head>
 <body>
-<div class="container">
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
 
-    <h1>Directory</h1>
-    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
-
-    <!-- Row 1: Search + Faculty -->
-    <form method="get">
-        <div class="filters-row">
-            <input
-                type="text"
-                name="q"
-                placeholder="Search by name..."
-                value="{{ search_query or '' }}"
-            >
-
-            <div class="dropdown" id="faculty-dropdown">
-                <div class="dropdown-btn" onclick="toggleDropdown('faculty-dropdown')">
-                    Faculties ▼
+    <div class="shell">
+        <!-- Header panel -->
+        <div class="panel page-header">
+            <div class="page-header-row">
+                <div>
+                    <h1 class="page-title">Directory</h1>
+                    <p class="muted">
+                        Browse students and mentors, filter by faculty, role, and expertise.
+                    </p>
                 </div>
-                <div class="dropdown-content">
-                    {% for code, name in FACULTIES %}
-                    <label>
-                        <input type="checkbox"
-                            name="faculty"
-                            value="{{ code }}"
-                            {% if code in faculty_filter %}checked{% endif %}>
-                        {{ code|upper }}
-                    </label>
-                    {% endfor %}
-                </div>
+                <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
             </div>
-
         </div>
 
-        <!-- Row 2: Role + Expertise -->
-        <div class="filters-row second">
-            <!-- role filter -->
-            <label>
-                <input type="radio" name="role" value="all"
-                       {% if role_filter == 'all' %}checked{% endif %}
-                       onclick="updateExpertiseVisibility()">
-                All
-            </label>
-            <label>
-                <input type="radio" name="role" value="student"
-                       {% if role_filter == 'student' %}checked{% endif %}
-                       onclick="updateExpertiseVisibility()">
-                Students
-            </label>
-            <label>
-                <input type="radio" name="role" value="mentor"
-                       {% if role_filter == 'mentor' %}checked{% endif %}
-                       onclick="updateExpertiseVisibility()">
-                Mentors
-            </label>
+        <!-- Filters panel -->
+        <div class="panel filters-panel">
+            <form method="get">
+                <!-- Row 1: Search + Faculty -->
+                <div class="filters-row">
+                    <input
+                        type="text"
+                        name="q"
+                        class="input-text"
+                        placeholder="Search by name..."
+                        value="{{ search_query or '' }}"
+                    >
 
-            <!-- small gap -->
-            <span style="margin: 0 8px;">|</span>
-
-            <!-- expertise filter -->
-            <div id="expertise-section" style="display:none;">
-                <div class="dropdown" id="expertise-dropdown">
-                    <div class="dropdown-btn" onclick="toggleDropdown('expertise-dropdown')">
-                        Expertise ▼
+                    <div class="dropdown" id="faculty-dropdown">
+                        <button type="button" class="dropdown-btn" onclick="toggleDropdown('faculty-dropdown')">
+                            Faculties ▼
+                        </button>
+                        <div class="dropdown-content">
+                            {% for code, name in FACULTIES %}
+                            <label>
+                                <input type="checkbox"
+                                       name="faculty"
+                                       value="{{ code }}"
+                                       {% if code in faculty_filter %}checked{% endif %}>
+                                {{ code|upper }}
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <div class="dropdown-content">
-                        {% for area in EXPERTISE_CHOICES %}
+                </div>
+
+                <!-- Row 2: Role + Expertise + Submit -->
+                <div class="filters-row second">
+                    <!-- role filter -->
+                    <div class="role-filters">
                         <label>
-                            <input type="checkbox"
-                                name="expertise"
-                                value="{{ area }}"
-                                {% if area in expertise_filter %}checked{% endif %}>
-                            {{ area }}
+                            <input type="radio" name="role" value="all"
+                                   {% if role_filter == 'all' %}checked{% endif %}
+                                   onclick="updateExpertiseVisibility()">
+                            All
                         </label>
-                        {% endfor %}
+                        <label>
+                            <input type="radio" name="role" value="student"
+                                   {% if role_filter == 'student' %}checked{% endif %}
+                                   onclick="updateExpertiseVisibility()">
+                            Students
+                        </label>
+                        <label>
+                            <input type="radio" name="role" value="mentor"
+                                   {% if role_filter == 'mentor' %}checked{% endif %}
+                                   onclick="updateExpertiseVisibility()">
+                            Mentors
+                        </label>
                     </div>
+
+                    <span class="filters-divider">|</span>
+
+                    <!-- expertise filter -->
+                    <div id="expertise-section" style="display:none;">
+                        <div class="dropdown" id="expertise-dropdown">
+                            <button type="button" class="dropdown-btn" onclick="toggleDropdown('expertise-dropdown')">
+                                Expertise ▼
+                            </button>
+                            <div class="dropdown-content">
+                                {% for area in EXPERTISE_CHOICES %}
+                                <label>
+                                    <input type="checkbox"
+                                           name="expertise"
+                                           value="{{ area }}"
+                                           {% if area in expertise_filter %}checked{% endif %}>
+                                    {{ area }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-filter-submit">Search</button>
                 </div>
-            </div>
-
-            <button type="submit" style="margin-left:auto;">Search</button>
+            </form>
         </div>
-    </form>
 
-    <div class="list">
+        <!-- Results panel -->
+        <div class="panel list-panel">
         {% if combined_list %}
-            {% for item in combined_list %}
-                <div class="card">
-                    <a href="{{ url_for('view_user', user_id=item.id) }}" class="name-link">
-                        {{ item.name }}
-                    </a>
+            <div class="list">
+                {% for item in combined_list %}
+                    {% set pfp = item.pfp or 'default_pfp.png' %}
+                    <div class="card user-card">
+                        <div class="user-card-header">
+                            <div class="user-pfp-wrap">
+                                <img src="{{ url_for('static', filename='assets/pfp/' ~ pfp) }}"
+                                    alt="{{ item.name }} avatar"
+                                    class="user-pfp">
+                            </div>
 
-                    <div class="subtext">
-                        {% if item.type == 'student' %}
-                            {{ get_programme_full_name(item.programme) }}
-                            {% if item.specialization %}
-                                · {{ get_spec_full_name(item.specialization) }}
-                            {% endif %}
-                            <br>
-                            {{ item.faculty|upper }} | Year {{ item.year }}
-                        {% else %}
-                        {{ item.faculty|upper }} | {{ item.position }}
+                            <div class="user-main">
+                                <div class="user-name-row">
+                                <a href="{{ url_for('view_user', user_id=item.id) }}" class="name-link">
+                                    {{ item.name }}
+                                </a>
+
+                                {% if item.type == 'student' %}
+                                    <span class="role-tag student-tag">STUDENT</span>
+                                {% else %}
+                                    <span class="role-tag mentor-tag">MENTOR</span>
+                                {% endif %}
+                            </div>
+
+
+                                <div class="subtext">
+                                    {% if item.type == 'student' %}
+                                        {{ item.faculty|upper }} | Year {{ item.year }} Student
+                                        {% endif %}
+                                        <br>
+                                        {{ get_programme_full_name(item.programme) }}
+                                        {% if item.specialization %}
+                                            · {{ get_spec_full_name(item.specialization) }}
+                                    {% else %}
+                                        {{ item.faculty|upper }} | {{ item.position }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if item.type == 'mentor' and item.expertise %}
+                            <div class="tags">
+                                {% for area in item.expertise.split(';') %}
+                                    <span class="tag">{{ area|trim }}</span>
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     </div>
-
-                    {% if item.type == 'mentor' and item.expertise %}
-                        {% for area in item.expertise.split(';') %}
-                            <span class="tag">{{ area|trim }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         {% else %}
-            <p>No users found.</p>
+            <p class="muted">No users found for the selected filters.</p>
         {% endif %}
     </div>
 
-</div>
+    </div>
 
 <script>
     function toggleDropdown(id) {
@@ -255,21 +299,6 @@
         const pickedRole = document.querySelector('input[name="role"]:checked').value;
         const section = document.getElementById("expertise-section");
         section.style.display = (pickedRole === "mentor") ? "block" : "none";
-    }
-
-    // Update dropdown text when selected
-    function updateDropdownLabel(dropdownId, labelDefault) {
-        const dropdown = document.getElementById(dropdownId);
-        const btn = dropdown.querySelector(".dropdown-btn");
-        const checked = dropdown.querySelectorAll("input[type=checkbox]:checked");
-
-        if (checked.length === 0) {
-            btn.textContent = labelDefault + " ▼";
-        } else if (checked.length === 1) {
-            btn.textContent = checked[0].value + " ▼";
-        } else {
-            btn.textContent = checked.length + " selected ▼";
-        }
     }
 
     function updateFacultyLabel() {
@@ -301,15 +330,18 @@
             btn.textContent = checked.length + " selected ▼";
         }
     }
-    
+
     function registerDropdownUpdates() {
         document.querySelectorAll("#faculty-dropdown input[type=checkbox]").forEach(cb =>
             cb.addEventListener("change", updateFacultyLabel)
         );
 
-        document.querySelectorAll("#expertise-dropdown input[type=checkbox]").forEach(cb =>
-            cb.addEventListener("change", updateExpertiseLabel)
-        );
+        const expertiseDropdown = document.getElementById("expertise-dropdown");
+        if (expertiseDropdown) {
+            expertiseDropdown.querySelectorAll("input[type=checkbox]").forEach(cb =>
+                cb.addEventListener("change", updateExpertiseLabel)
+            );
+        }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -319,6 +351,5 @@
         updateExpertiseLabel();
     });
 </script>
-
 </body>
 </html>

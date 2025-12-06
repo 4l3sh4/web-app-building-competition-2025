@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .card-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .profile-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .pfp {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .badge {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid #444;
+            margin-left: 8px;
+        }
+        .badge-new {
+            border-color: red;
+        }
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- CONTAINER 1: BASIC INFO -->
+        <div class="card">
+            <div class="profile-row">
+                {% set pfp_filename = mentor_profile.pfp if mentor_profile.pfp else 'default_pfp.png' %}
+                <img src="{{ url_for('static', filename='assets/pfp/' ~ pfp_filename) }}"
+                    alt="Profile Picture"
+                    class="pfp">
+
+                <div>
+                    <!-- Full name + "Dashboard" -->
+                    <div class="card-header">
+                        {{ mentor_profile.full_name}}'s Dashboard
+                    </div>
+
+                    <!-- Faculty | Position -->
+                    <div>
+                        {{ mentor_profile.faculty|upper }} | {{ position }}
+                    </div>
+
+                    <br>
+
+                    <!-- Edit profile button -->
+                    <a href="{{ url_for('edit_mentor_profile') }}" class="btn">
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTAINER 2: Incoming Requests -->
+        <div class="card">
+    <div class="card-header">Mentorship Requests</div>
+
+            <p>You have no pending mentorship requests.</p>
+    </div>
+
+        <!-- CONTAINER 3: Mentees -->
+        <div class="card">
+            <div class="card-header">My Mentees</div>
+            <p>You have no mentees yet.</p>
+
+        </div>
+
+    </div>
+
+    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
+    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
+
+    {% if is_self is defined and is_self %}
+        <a href="{{ url_for('logout') }}">Press here to logout</a>
+    {% endif %}
+</body>
+</html>
