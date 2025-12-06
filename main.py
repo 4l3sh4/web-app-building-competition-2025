@@ -6,12 +6,16 @@ from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAre
 from wtforms.validators import InputRequired, Length, ValidationError, Email
 from flask_bcrypt import Bcrypt
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'TripleABattery'
+app.config['UPLOAD_FOLDER'] = 'static/assets/pfp'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -154,14 +158,12 @@ class StudentProfile(db.Model):
     )
 
     full_name = db.Column(db.String(100), nullable=False)
-
     faculty = db.Column(db.String(10), nullable=False)      
     programme = db.Column(db.String(10), nullable=False)    
     year = db.Column(db.Integer, nullable=False)            
-
     specialization = db.Column(db.String(20), nullable=True)  
-
     bio = db.Column(db.Text)
+    pfp = db.Column(db.String(255), nullable=True)
 
 class MentorProfile(db.Model):
     user_id = db.Column(
@@ -175,6 +177,7 @@ class MentorProfile(db.Model):
     expertise = db.Column(db.String(150), nullable=False)         
     office_location = db.Column(db.String(50))
     linkedin_profile = db.Column(db.String(255))  
+    pfp = db.Column(db.String(255), nullable=True)
 
 class Project(db.Model):
     """Project & Opportunities Board entries"""
@@ -445,6 +448,9 @@ def register():
 
     return render_template('register.html', form=form)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/student/profile/edit', methods=['GET', 'POST'])
 @login_required
 def edit_student_profile():
@@ -463,6 +469,16 @@ def edit_student_profile():
 
         if not profile:
             profile = StudentProfile(user_id=current_user.id)
+
+        #handle file upload
+        file = request.files.get('pfp')
+        if file and file.filename != '' and allowed_file(file.filename):
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(f"{current_user.id}.{ext}")  # e.g. 3.jpg
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            profile.pfp = filename
 
         profile.full_name = full_name
         profile.faculty = faculty
@@ -516,6 +532,16 @@ def edit_mentor_profile():
         if not profile:
             profile = MentorProfile(user_id=current_user.id)
 
+        #handle file upload
+        file = request.files.get('pfp')
+        if file and file.filename != '' and allowed_file(file.filename):
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(f"{current_user.id}.{ext}")  # e.g. 5.png
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            profile.pfp = filename
+
         profile.full_name = full_name.strip()
         profile.position = position
         profile.faculty = faculty
@@ -526,7 +552,7 @@ def edit_mentor_profile():
         db.session.add(profile)
         db.session.commit()
 
-        return redirect(url_for('profile')) 
+        return redirect(url_for('profile'))  
 
     # GET: show form with existing values if profile exists
     return render_template(
