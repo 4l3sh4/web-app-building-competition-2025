@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/thread-create.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/project-create.css') }}">
     <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Create Project</title>
@@ -41,29 +41,29 @@
                 {% endfor %}
             </div>
 
-    <p>
-        {{ form.project_type.label }}<br>
-        {{ form.project_type(id="project_type") }}
-    </p>
+            <div class="form-group">
+                {{ form.project_type.label }}
+                {{ form.project_type(id="project_type", class='form-control') }}
+            </div>
 
-    <div id="other-project-type-wrapper" style="display:none;">
-        <p>
-            {{ form.other_project_type.label }}<br>
-            {{ form.other_project_type() }}
-            {% for error in form.other_project_type.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
-    </div>
+            <div id="other-project-type-wrapper" style="display:none;">
+                <div class="form-group">
+                    {{ form.other_project_type.label }}
+                    {{ form.other_project_type(class='form-control') }}
+                    {% for error in form.other_project_type.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
 
-    <p>
-        {{ form.skills_required.label }}<br>
-        {{ form.skills_required(size=60) }}
-    </p>
+            <div class="form-group">
+                {{ form.skills_required.label }}
+                {{ form.skills_required(class='form-control') }}
+            </div>
 
             <div class="submit-row">
-                    {{ form.submit(class='submit-btn') }}
-                </div>
+                {{ form.submit(class='submit-btn') }}
+            </div>
         </form>
         </div>
     </div>

@@ -11,19 +11,20 @@
     <title>Projects & Opportunities</title>
 </head>
 <body>
-    {% if mine %}
-        <h1>My Projects & Opportunities</h1>
-        <p><a href="{{ url_for('project_list') }}">View all projects</a></p>
-    {% else %}
-        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
         <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
     </button>
-    
+
     <div class="projects-wrapper">
         <div class="projects-header">
-            <h1>Projects & Opportunities Board</h1>
-        <p><a href="{{ url_for('my_projects') }}">View only my projects</a></p>
-    {% endif %}
+            {% if mine %}
+                <h1>My Projects & Opportunities</h1>
+                <p><a href="{{ url_for('project_list') }}" class="pill-text pill-text-blue">View all projects</a></p>
+            {% else %}
+                <h1>Projects & Opportunities Board</h1>
+                <p><a href="{{ url_for('my_projects') }}" class="pill-text pill-text-blue">View only my projects</a></p>
+            {% endif %}
+
             <div class="projects-nav">
                 <a href="{{ url_for('home') }}" class="btn btn-ghost">← Back to Home</a>
                 <a href="{{ url_for('create_project') }}" class="btn btn-primary">+ Create New Project</a>
@@ -32,7 +33,7 @@
 
     <!-- Filter form -->
     <form method="get">
-        <label for="category">Filter by category:</label>
+        <h3><label for="category">Filter by category:</label></h3>
         <select name="category" id="category" onchange="this.form.submit()">
             <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
             <option value="Competition" {% if selected_category == 'Competition' %}selected{% endif %}>Competition</option>
@@ -45,27 +46,22 @@
     </form>
 
     {% if projects %}
-        <ul>
+        <div class="projects-grid">
             {% for project in projects %}
-                <li>
-                    <div>
-                        <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
-                            {{ project.owner.username }}
-                        </a>
-                        · {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
-                    </div>
-
-                    <a href="{{ url_for('project_detail', project_id=project.id) }}">
-                        <strong>{{ project.title }}</strong>
-                    </a>
+                <a href="{{ url_for('project_detail', project_id=project.id) }}" class="project-card">
                     {% if project.project_type %}
-                        ({{ project.project_type }})
+                        <div class="project-type">{{ project.project_type }}</div>
                     {% endif %}
-                </li>
+                    <h3>{{ project.title }}</h3>
+                    <p class="project-excerpt">{{ project.description|truncate(220) }}</p><br>
+                    <a href="{{ url_for('view_user', user_id=project.owner.id) }}"> {{ project.owner.username }} </a>
+                    · {{ project.created_at.strftime('%Y-%m-%d') }}
+                    <div class="reply-count-badge">{{ project.messages|length if project.messages else 0 }}</div>
+                </a>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
-        <p>No projects found for this category.</p>
+        <div class="empty-state">No projects found for this category.</div>
     {% endif %}
 </body>
 </html>

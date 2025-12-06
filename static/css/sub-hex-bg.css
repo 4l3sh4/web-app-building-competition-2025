@@ -24,9 +24,6 @@ body {
     background-attachment: fixed;
     color: var(--text-primary);
     min-height:100vh;
-    display:flex;
-    align-items:start;
-    justify-content:center;
     padding:48px 16px;
     position: relative;
     transition: background 0.3s ease, color 0.3s ease;
