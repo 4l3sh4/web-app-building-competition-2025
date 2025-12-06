@@ -3,84 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>Mentor Profile</title>
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 1.5rem;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 0.25rem;
+        }
+
+        .subtitle {
+            margin-bottom: 1.25rem;
+            color: #555;
+        }
+
+        form {
+            margin-top: 1rem;
+        }
+
+        .error {
+            color: #b91c1c;
+            background: #fee2e2;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .top-row {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .pfp-block {
+            text-align: center;
+        }
+
+        .pfp-block img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .fields {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"],
+        .form-group select {
+            padding: 0.4rem 0.5rem;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .expertise-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .expertise-hint {
+            font-size: 0.8rem;
+            color: #777;
+            margin-bottom: 0.5rem;
+        }
+
+        .expertise-list {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            background: #fafafa;
+            max-height: 220px;
+            overflow-y: auto;
+
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 0.25rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .expertise-list label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .actions {
+            margin-top: 1rem;
+        }
+
+        button[type="submit"] {
+            padding: 0.5rem 1.3rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background: #1d4ed8;
+        }
+
+        .links {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .links a {
+            color: #2563eb;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
+<div class="container">
     <h1>Welcome, {{ current_user.username }}!</h1>
-    <p>You are logged in as: <strong>{{ current_user.role|capitalize }}</strong></p>
-
+    <p class="subtitle">
+        You are logged in as:
+        <strong>{{ current_user.role|capitalize }}</strong>
+    </p>
 
     <form method="POST" enctype="multipart/form-data">
-    {% if error %}
-        <p style="color:red;">{{ error }}</p>
-    {% endif %}
-
-    <div style="margin-bottom: 1rem;">
-        <label for="pfp">Profile Picture</label>
-
-        {% if profile and profile.pfp %}
-            <div style="margin: 10px 0;">
-                <img src="{{ url_for('static', filename='assets/pfp/' + profile.pfp) }}"
-                     alt="Profile Picture"
-                     style="width:120px; height:120px; object-fit:cover; border-radius:50%;">
-            </div>
+        {% if error %}
+            <div class="error">{{ error }}</div>
         {% endif %}
 
-        <input type="file" name="pfp" id="pfp" accept="image/*">
-    </div>
+        <div class="top-row">
+            <div class="pfp-block">
+                {% if profile and profile.pfp %}
+                    <img src="{{ url_for('static', filename='assets/pfp/' ~ profile.pfp) }}"
+                         alt="Profile Picture">
+                {% endif %}
+                <input type="file" name="pfp" id="pfp" accept="image/*">
+            </div>
 
-    <label>Full Name</label>
-    <input type="text" name="full_name"
-            value="{{ profile.full_name if profile else '' }}" required>
+            <div class="fields">
+                <div class="form-group">
+                    <label for="full_name">Full Name</label>
+                    <input type="text"
+                           id="full_name"
+                           name="full_name"
+                           value="{{ profile.full_name if profile else '' }}"
+                           required>
+                </div>
 
-    <label>Position</label>
-    <select name="position" required>
-        <option value="">-- Select Position --</option>
-        {% for p in POSITION_CHOICES %}
-        <option value="{{ p }}"
-            {% if profile and profile.position == p %}selected{% endif %}>
-            {{ p }}
-        </option>
-        {% endfor %}
-    </select>
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <select id="position" name="position" required>
+                        <option value="">-- Select Position --</option>
+                        {% for p in POSITION_CHOICES %}
+                            <option value="{{ p }}"
+                                {% if profile and profile.position == p %}selected{% endif %}>
+                                {{ p }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <label>Faculty</label>
-    <select name="faculty" required>
-        <option value="">-- Select Faculty --</option>
-        {% for value, label in FACULTIES %}
-            <option value="{{ value }}"
-                {% if profile and profile.faculty == value %}selected{% endif %}>
-                {{ label }}
-            </option>
-        {% endfor %}
-    </select>
+                <div class="form-group">
+                    <label for="faculty">Faculty</label>
+                    <select id="faculty" name="faculty" required>
+                        <option value="">-- Select Faculty --</option>
+                        {% for value, label in FACULTIES %}
+                            <option value="{{ value }}"
+                                {% if profile and profile.faculty == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <label>Expertise</label>
-    <select name="expertise" required>
-        <option value="">-- Select Expertise --</option>
-        {% for e in EXPERTISE_CHOICES %}
-        <option value="{{ e }}"
-            {% if profile and profile.expertise == e %}selected{% endif %}>
-            {{ e }}
-        </option>
-        {% endfor %}
-    </select>
+                <div class="form-group">
+                    <label for="office_location">Office Location</label>
+                    <input type="text"
+                           id="office_location"
+                           name="office_location"
+                           value="{{ profile.office_location or '' }}">
+                </div>
 
-    <label>Office Location</label>
-    <input type="text" name="office_location"
-            value="{{ profile.office_location if profile else '' }}">
+                <div class="form-group">
+                    <label for="linkedin_profile">LinkedIn Profile</label>
+                    <input type="url"
+                           id="linkedin_profile"
+                           name="linkedin_profile"
+                           placeholder="https://www.linkedin.com/in/username"
+                           value="{{ profile.linkedin_profile or '' }}">
+                </div>
+            </div>
+        </div>
 
-    <label>LinkedIn Profile</label>
-    <input type="url" name="linkedin_profile"
-            placeholder="https://www.linkedin.com/in/username"
-            value="{{ profile.linkedin_profile if profile else '' }}">
+        <!-- Expertise -->
+        <div class="form-group">
+            <div class="expertise-title">Areas of Expertise (max 3):</div>
+            <div class="expertise-hint">Choose up to three that best describe you.</div>
 
-    <button type="submit">Save</button>
+            {% set selected_expertise = [] %}
+            {% if profile and profile.expertise %}
+                {% set selected_expertise = profile.expertise.split(',') %}
+            {% endif %}
+
+            <div class="expertise-list">
+                {% for area in EXPERTISE_CHOICES %}
+                    <label>
+                        <input
+                            type="checkbox"
+                            name="expertise"
+                            value="{{ area }}"
+                            {% if area in selected_expertise %}checked{% endif %}
+                        >
+                        {{ area }}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit">Save</button>
+        </div>
     </form>
 
-    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
-    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
-    <a href="{{ url_for('logout') }}">Press here to logout</a>
-
+    <div class="links">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('project_list') }}">Go to Project Board</a>
+        <a href="{{ url_for('forum') }}">Go to Discussion Board</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</div>
 </body>
 </html>

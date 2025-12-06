@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Directory</title>
+    <style>
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 16px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        h1 {
+            margin-bottom: 16px;
+        }
+        .columns {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+        }
+        .name-link {
+            text-decoration: none;
+            font-weight: 600;
+            color: #23408e;
+        }
+        .name-link:hover {
+            text-decoration: underline;
+        }
+        .subtext {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 999px;
+            border: 1px solid #aaa;
+            margin-top: 4px;
+        }
+                .filters-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .filters-row input[type="text"] {
+            flex: 1;
+            padding: 6px 8px;
+        }
+        .filters-row select,
+        .filters-row button {
+            padding: 6px 8px;
+        }
+                .filters-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filters-row input[type="text"] {
+            flex: 1;
+            padding: 6px 8px;
+        }
+        .filters-row select,
+        .filters-row button {
+            padding: 6px 8px;
+        }
+        .filters-row.second {
+            justify-content: flex-start;
+            font-size: 0.9rem;
+        }
+        .filters-row.second label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-btn {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .dropdown-content label {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .dropdown.show .dropdown-content {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Directory</h1>
+    <p><a href="{{ url_for('home') }}">Back to Home</a></p>
+
+    <!-- Row 1: Search + Faculty -->
+    <form method="get">
+        <div class="filters-row">
+            <input
+                type="text"
+                name="q"
+                placeholder="Search by name..."
+                value="{{ search_query or '' }}"
+            >
+
+            <div class="dropdown" id="faculty-dropdown">
+                <div class="dropdown-btn" onclick="toggleDropdown('faculty-dropdown')">
+                    Faculties ▼
+                </div>
+                <div class="dropdown-content">
+                    {% for code, name in FACULTIES %}
+                    <label>
+                        <input type="checkbox"
+                            name="faculty"
+                            value="{{ code }}"
+                            {% if code in faculty_filter %}checked{% endif %}>
+                        {{ code|upper }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Row 2: Role + Expertise -->
+        <div class="filters-row second">
+            <!-- role filter -->
+            <label>
+                <input type="radio" name="role" value="all"
+                       {% if role_filter == 'all' %}checked{% endif %}
+                       onclick="updateExpertiseVisibility()">
+                All
+            </label>
+            <label>
+                <input type="radio" name="role" value="student"
+                       {% if role_filter == 'student' %}checked{% endif %}
+                       onclick="updateExpertiseVisibility()">
+                Students
+            </label>
+            <label>
+                <input type="radio" name="role" value="mentor"
+                       {% if role_filter == 'mentor' %}checked{% endif %}
+                       onclick="updateExpertiseVisibility()">
+                Mentors
+            </label>
+
+            <!-- small gap -->
+            <span style="margin: 0 8px;">|</span>
+
+            <!-- expertise filter -->
+            <div id="expertise-section" style="display:none;">
+                <div class="dropdown" id="expertise-dropdown">
+                    <div class="dropdown-btn" onclick="toggleDropdown('expertise-dropdown')">
+                        Expertise ▼
+                    </div>
+                    <div class="dropdown-content">
+                        {% for area in EXPERTISE_CHOICES %}
+                        <label>
+                            <input type="checkbox"
+                                name="expertise"
+                                value="{{ area }}"
+                                {% if area in expertise_filter %}checked{% endif %}>
+                            {{ area }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" style="margin-left:auto;">Search</button>
+        </div>
+    </form>
+
+    <div class="list">
+        {% if combined_list %}
+            {% for item in combined_list %}
+                <div class="card">
+                    <a href="{{ url_for('view_user', user_id=item.id) }}" class="name-link">
+                        {{ item.name }}
+                    </a>
+
+                    <div class="subtext">
+                        {% if item.type == 'student' %}
+                            {{ get_programme_full_name(item.programme) }}
+                            {% if item.specialization %}
+                                · {{ get_spec_full_name(item.specialization) }}
+                            {% endif %}
+                            <br>
+                            {{ item.faculty|upper }} | Year {{ item.year }}
+                        {% else %}
+                        {{ item.faculty|upper }} | {{ item.position }}
+                        {% endif %}
+                    </div>
+
+                    {% if item.type == 'mentor' and item.expertise %}
+                        {% for area in item.expertise.split(';') %}
+                            <span class="tag">{{ area|trim }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No users found.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+    function toggleDropdown(id) {
+        document.getElementById(id).classList.toggle("show");
+    }
+
+    document.addEventListener("click", function(e) {
+        document.querySelectorAll(".dropdown").forEach(dd => {
+            if (!dd.contains(e.target)) dd.classList.remove("show");
+        });
+    });
+
+    function updateExpertiseVisibility() {
+        const pickedRole = document.querySelector('input[name="role"]:checked').value;
+        const section = document.getElementById("expertise-section");
+        section.style.display = (pickedRole === "mentor") ? "block" : "none";
+    }
+
+    // Update dropdown text when selected
+    function updateDropdownLabel(dropdownId, labelDefault) {
+        const dropdown = document.getElementById(dropdownId);
+        const btn = dropdown.querySelector(".dropdown-btn");
+        const checked = dropdown.querySelectorAll("input[type=checkbox]:checked");
+
+        if (checked.length === 0) {
+            btn.textContent = labelDefault + " ▼";
+        } else if (checked.length === 1) {
+            btn.textContent = checked[0].value + " ▼";
+        } else {
+            btn.textContent = checked.length + " selected ▼";
+        }
+    }
+
+    function updateFacultyLabel() {
+        const dropdown = document.getElementById("faculty-dropdown");
+        const btn = dropdown.querySelector(".dropdown-btn");
+        const checked = dropdown.querySelectorAll("input[type=checkbox]:checked");
+
+        if (checked.length === 0) {
+            btn.textContent = "Faculties ▼";
+        } else {
+            let values = [];
+            checked.forEach(cb => values.push(cb.value.toUpperCase()));
+            btn.textContent = values.join(", ") + " ▼";
+        }
+    }
+
+    function updateExpertiseLabel() {
+        const dropdown = document.getElementById("expertise-dropdown");
+        if (!dropdown) return;
+
+        const btn = dropdown.querySelector(".dropdown-btn");
+        const checked = dropdown.querySelectorAll("input[type=checkbox]:checked");
+
+        if (checked.length === 0) {
+            btn.textContent = "Expertise ▼";
+        } else if (checked.length === 1) {
+            btn.textContent = checked[0].value + " ▼";
+        } else {
+            btn.textContent = checked.length + " selected ▼";
+        }
+    }
+    
+    function registerDropdownUpdates() {
+        document.querySelectorAll("#faculty-dropdown input[type=checkbox]").forEach(cb =>
+            cb.addEventListener("change", updateFacultyLabel)
+        );
+
+        document.querySelectorAll("#expertise-dropdown input[type=checkbox]").forEach(cb =>
+            cb.addEventListener("change", updateExpertiseLabel)
+        );
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updateExpertiseVisibility();
+        registerDropdownUpdates();
+        updateFacultyLabel();
+        updateExpertiseLabel();
+    });
+</script>
+
+</body>
+</html>

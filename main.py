@@ -1,5 +1,6 @@
 from flask import Flask, render_template, url_for, redirect, request
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import or_
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField, SelectField
@@ -514,12 +515,28 @@ def edit_mentor_profile():
         full_name = request.form.get('full_name')
         position = request.form.get('position')
         faculty = request.form.get('faculty')
-        expertise = request.form.get('expertise')
         office_location = request.form.get('office_location') or None
         linkedin_profile = request.form.get('linkedin_profile') or None
 
-        if not (full_name and position and faculty and expertise):
+        expertise_list = request.form.getlist('expertise')
+
+        if not (full_name and position and faculty and expertise_list):
             error = "Please fill in all required fields."
+            return render_template(
+                'edit_mentor.html',
+                profile=profile,
+                FACULTIES=FACULTIES,
+                EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+                POSITION_CHOICES=POSITION_CHOICES,
+                error=error,
+            )
+        
+        if len(expertise_list) > 3:
+            error = "You can select a maximum of 3 expertise areas."
+            # keep what they already selected
+            if not profile:
+                profile = MentorProfile(user_id=current_user.id)
+            profile.expertise = ",".join(expertise_list)
             return render_template(
                 'edit_mentor.html',
                 profile=profile,
@@ -545,7 +562,7 @@ def edit_mentor_profile():
         profile.full_name = full_name.strip()
         profile.position = position
         profile.faculty = faculty
-        profile.expertise = expertise
+        profile.expertise = ";".join(expertise_list)
         profile.office_location = office_location.strip() if office_location else None
         profile.linkedin_profile = linkedin_profile.strip() if linkedin_profile else None
 
@@ -684,7 +701,6 @@ def my_projects():
         selected_category=selected_category,
         mine=True
     )
-
 
 @app.route('/projects/create', methods=['GET', 'POST'])
 @login_required
@@ -991,6 +1007,92 @@ def downvote_thread(thread_id):
     db.session.commit()
     return redirect(url_for('thread_detail', thread_id=thread.id))
 
+# ---------------------
+# DIRECTORY
+# ---------------------
+@app.route('/directory')
+@login_required
+def directory():
+    q = request.args.get('q', '').strip()
+    role_filter = request.args.get('role', 'all')  #
+
+    # multiple faculty & expertise choices
+    faculty_filter = request.args.getlist('faculty')     
+    expertise_filter = request.args.getlist('expertise')  
+
+    combined_list = []
+
+    # ---------- STUDENTS ----------
+    if role_filter in ('all', 'student'):
+        student_query = StudentProfile.query.join(User, StudentProfile.user_id == User.id)
+
+        if q:
+            student_query = student_query.filter(StudentProfile.full_name.ilike(f"%{q}%"))
+
+        # only filter by faculty if at least one was selected
+        if faculty_filter:
+            student_query = student_query.filter(StudentProfile.faculty.in_(faculty_filter))
+
+        students = [
+            {
+                "type": "student",
+                "id": s.user_id,
+                "name": s.full_name,
+                "faculty": s.faculty,
+                "programme": s.programme,
+                "specialization": s.specialization,
+                "year": s.year,
+            }
+            for s in student_query.all()
+        ]
+
+        combined_list.extend(students)
+
+    # ---------- MENTORS ----------
+    if role_filter in ('all', 'mentor'):
+        mentor_query = MentorProfile.query.join(User, MentorProfile.user_id == User.id)
+
+        if q:
+            mentor_query = mentor_query.filter(MentorProfile.full_name.ilike(f"%{q}%"))
+
+        if faculty_filter:
+            mentor_query = mentor_query.filter(MentorProfile.faculty.in_(faculty_filter))
+
+        if expertise_filter:
+            conditions = [
+                MentorProfile.expertise.ilike(f"%{e}%")
+                for e in expertise_filter
+            ]
+            mentor_query = mentor_query.filter(or_(*conditions))
+
+        mentors = [
+            {
+                "type": "mentor",
+                "id": m.user_id,
+                "name": m.full_name,
+                "faculty": m.faculty,
+                "position": m.position,
+                "expertise": m.expertise,
+            }
+            for m in mentor_query.all()
+        ]
+
+        combined_list.extend(mentors)
+
+    combined_list.sort(key=lambda x: x["name"].lower())
+
+    return render_template(
+        "directory.html",
+        combined_list=combined_list,
+        get_programme_full_name=get_programme_full_name,
+        get_spec_full_name=get_spec_full_name,
+        FACULTIES=FACULTIES,
+        EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+        search_query=q,
+        role_filter=role_filter,
+        faculty_filter=faculty_filter,       
+        expertise_filter=expertise_filter,   
+    )
 
 if __name__ == '__main__':
     with app.app_context():
