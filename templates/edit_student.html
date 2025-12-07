@@ -2,85 +2,132 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>Edit Student Profile</title>
+
+    <!-- base + edit styles + bg + darkmode -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/edit.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
 </head>
 <body>
-    <h1>Welcome, {{ current_user.username }}!</h1>
-    <p>You are logged in as: <strong>{{ current_user.role|capitalize }}</strong></p>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
 
-    <label>Username</label>
-    <input type="text" value="{{ current_user.username }}" disabled>
-    <label>Email</label>
-    <input type="email" value="{{ current_user.email }}" disabled>
+    <div class="shell">
 
-    <form method="POST" enctype="multipart/form-data">
-    
-    <div style="margin-bottom: 1rem;">
-        <label for="pfp">Profile Picture</label>
+        <!-- HEADER PANEL (like request page) -->
+        <div class="panel page-header">
+            <div class="page-header-row">
+                <div>
+                    <h1 class="page-title">Edit Profile</h1>
+                    <p class="muted">
+                        Update your student details so mentors and teammates can know you better.
+                    </p>
+                </div>
 
-        {% if profile and profile.pfp %}
-            <div style="margin: 10px 0;">
-                <img src="{{ url_for('static', filename='assets/pfp/' + profile.pfp) }}"
-                     alt="Profile Picture"
-                     style="width:120px; height:120px; object-fit:cover; border-radius:50%;">
+                <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
             </div>
-        {% endif %}
+        </div>
 
-        <input type="file" name="pfp" id="pfp" accept="image/*">
+        <!-- MAIN EDIT PANEL: left = account + pfp, right = form -->
+        <div class="panel edit-panel">
+            <!-- LEFT COLUMN -->
+            <div class="profile-side">
+                <div class="pfp-block">
+                    {% if profile and profile.pfp %}
+                        <img src="{{ url_for('static', filename='assets/pfp/' + profile.pfp) }}"
+                            alt="Profile Picture">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='assets/pfp/default_pfp.png') }}"
+                            alt="Profile Picture">
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" class="readonly-field"
+                        value="{{ current_user.username }}" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="readonly-field"
+                        value="{{ current_user.email }}" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="pfp">Profile Picture</label>
+                    <input type="file" name="pfp" id="pfp" accept="image/*" form="student-edit-form">
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="form-side">
+                <form method="POST" enctype="multipart/form-data"
+                    id="student-edit-form" class="edit-form">
+
+                    <!-- Full name -->
+                    <div class="form-group">
+                        <label for="full_name">Full Name</label>
+                        <input type="text" id="full_name" name="full_name"
+                            value="{{ profile.full_name if profile else '' }}" required>
+                    </div>
+
+                    <!-- Faculty -->
+                    <div class="form-group">
+                        <label for="faculty">Faculty</label>
+                        <select name="faculty" id="faculty" required>
+                            {% for value, label in FACULTIES %}
+                                <option value="{{ value }}"
+                                    {% if profile and profile.faculty == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Programme -->
+                    <div class="form-group" id="programme-wrapper">
+                        <label for="programme">Programme</label>
+                        <select name="programme" id="programme" required>
+                            <option value="">-- Choose one --</option>
+                        </select>
+                    </div>
+
+                    <!-- Year -->
+                    <div class="form-group">
+                        <label for="year">Year of Study</label>
+                        <select name="year" id="year" required>
+                            {% for y in [1,2,3,4] %}
+                                <option value="{{ y }}"
+                                    {% if profile and profile.year == y %}selected{% endif %}>
+                                    Year {{ y }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Specialization -->
+                    <div class="form-group" id="specialization-wrapper" style="display:none;">
+                        <label for="specialization">Specialization</label>
+                        <select name="specialization" id="specialization">
+                            <option value="">-- Choose one --</option>
+                        </select>
+                    </div>
+
+                    <!-- Bio -->
+                    <div class="form-group">
+                        <label for="bio">Bio</label>
+                        <textarea name="bio" id="bio"
+                                placeholder="Tell others about your interests, skills, or goals…">{{ profile.bio if profile else '' }}</textarea>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-save">Save Profile</button>
+                </form>
+            </div>
+        </div>
     </div>
-        
-    <label>Full Name</label>
-    <input type="text" name="full_name"
-            value="{{ profile.full_name if profile else '' }}" required>
-
-    <!-- Faculty dropdown -->
-    <label>Faculty</label>
-    <select name="faculty" id="faculty" required>
-        {% for value, label in FACULTIES %}
-        <option value="{{ value }}"
-            {% if profile and profile.faculty == value %}selected{% endif %}>
-            {{ label }}
-        </option>
-        {% endfor %}
-    </select>
-
-    <div id="programme-wrapper">
-        <label>Programme</label>
-        <select name="programme" id="programme" required>
-            <option value="">-- Choose one --</option>
-        </select>
-    </div>
-
-    <!-- Year -->
-    <label>Year of Study</label>
-    <select name="year" id="year" required>
-        {% for y in [1,2,3,4] %}
-        <option value="{{ y }}"
-            {% if profile and profile.year == y %}selected{% endif %}>
-            Year {{ y }}
-        </option>
-        {% endfor %}
-    </select>
-
-    <!-- Specialization -->
-    <div id="specialization-wrapper" style="display: none;">
-        <label>Specialization</label>
-        <select name="specialization" id="specialization">
-         <option value="">-- Choose one --</option>
-        </select>
-    </div>
-
-    <!-- Bio -->
-    <label>Bio</label>
-    <textarea name="bio">{{ profile.bio if profile else '' }}</textarea>
-
-    <button type="submit">Save Profile</button>
-    </form>
-
-    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
-    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
-    <a href="{{ url_for('logout') }}">Press here to logout</a>
 
     <script>
         window.PROGRAMME_LABELS = {{ PROGRAMME_LABELS | tojson | safe }};
