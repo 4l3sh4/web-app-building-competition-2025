@@ -1125,7 +1125,6 @@ def directory():
     q = request.args.get('q', '').strip()
     role_filter = request.args.get('role', 'all')  #
 
-    # multiple faculty & expertise choices
     faculty_filter = request.args.getlist('faculty')     
     expertise_filter = request.args.getlist('expertise')  
 
@@ -1134,6 +1133,7 @@ def directory():
     # ---------- STUDENTS ----------
     if role_filter in ('all', 'student'):
         student_query = StudentProfile.query.join(User, StudentProfile.user_id == User.id)
+        student_query = student_query.filter(User.id != current_user.id)
 
         if q:
             student_query = student_query.filter(StudentProfile.full_name.ilike(f"%{q}%"))
@@ -1161,6 +1161,7 @@ def directory():
     # ---------- MENTORS ----------
     if role_filter in ('all', 'mentor'):
         mentor_query = MentorProfile.query.join(User, MentorProfile.user_id == User.id)
+        mentor_query = mentor_query.filter(User.id != current_user.id)
 
         if q:
             mentor_query = mentor_query.filter(MentorProfile.full_name.ilike(f"%{q}%"))
