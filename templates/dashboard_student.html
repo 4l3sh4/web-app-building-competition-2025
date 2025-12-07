@@ -3,142 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <title>Student Dashboard</title>
-    <style>
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 16px;
-        }
-        .card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        .card-header {
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .profile-row {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        .pfp {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .badge {
-            font-size: 0.8rem;
-            padding: 2px 8px;
-            border-radius: 999px;
-            border: 1px solid #444;
-            margin-left: 8px;
-        }
-        .badge-new {
-            border-color: red;
-        }
-        .btn {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 4px;
-            border: 1px solid #333;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
 </head>
-<body>
-    <div class="container">
+<body class="sub-hex-bg">
+<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
 
-        <!-- CONTAINER 1: BASIC INFO -->
-        <div class="card">
-            <div class="profile-row">
-                {% set pfp_filename = student_profile.pfp if student_profile.pfp else 'default_pfp.png' %}
-                <img src="{{ url_for('static', filename='assets/pfp/' ~ pfp_filename) }}"
-                    alt="Profile Picture"
-                    class="pfp">
+<div class="shell">
 
-                <div>
-                    <!-- Full name + "Dashboard" -->
-                    <div class="card-header">
-                        {{ student_profile.full_name}}'s Dashboard
+    <!-- HEADER PANEL -->
+    <div class="panel page-header">
+        <div class="page-header-row">
+            <div>
+                <h1 class="page-title">Student Dashboard</h1>
+                <p class="muted">
+                    See your projects, mentorship requests, and quick links in one place.
+                </p>
+            </div>
+            <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+        </div>
+    </div>
+
+    <!-- GRID: LEFT main / RIGHT side -->
+    <div class="dashboard-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="dashboard-main">
+
+            <!-- SUMMARY CARD -->
+            <div class="panel summary-panel">
+                <div class="summary-row">
+                    {% set pfp_filename = student_profile.pfp if student_profile.pfp else 'default_pfp.png' %}
+                    <div class="summary-pfp-wrap">
+                        <img src="{{ url_for('static', filename='assets/pfp/' ~ pfp_filename) }}"
+                             alt="Profile Picture"
+                             class="summary-pfp">
                     </div>
 
-                    <!-- Programme full name -->
-                    <div>
-                        {{ programme_full }}
-                        {% if specialization_full %}
-                            · {{ specialization_full }}
-                        {% endif %}
+                    <div class="summary-main">
+                        <div class="summary-name-row">
+                            <div class="summary-name">
+                                {{ student_profile.full_name }}
+                            </div>
+                            <span class="role-tag student-tag">STUDENT</span>
+                        </div>
+
+                        <div class="summary-subtext">
+                            {{ student_profile.faculty|upper }} | Year {{ student_profile.year }} Student<br>
+                            {{ programme_full }}
+                            {% if specialization_full %}
+                                · {{ specialization_full }}
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <!-- Faculty | Year _ Student -->
-                    <div>
-                        {{ student_profile.faculty|upper }} | Year {{ student_profile.year }} Student
+                    <div class="summary-actions">
+                        <a href="{{ url_for('edit_student_profile') }}" class="btn-main">
+                            Edit Profile
+                        </a>
                     </div>
-
-                    <br>
-
-                    <!-- Edit profile button -->
-                    <a href="{{ url_for('edit_student_profile') }}" class="btn">
-                        Edit Profile
-                    </a>
                 </div>
+            </div>
+
+            <!-- MY PROJECTS -->
+            <div class="panel">
+                <div class="section-title">My Projects</div>
+
+                {% if my_projects and my_projects|length > 0 %}
+                    <ol class="item-list numbered-list">
+                        {% for project in my_projects %}
+                            <li>
+                                <span class="item-index">{{ loop.index }}.</span>
+                                <a href="{{ url_for('project_detail', project_id=project.id) }}"
+                                   class="item-title link-primary">
+                                    {{ project.title }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t created any projects yet.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- MY MENTORSHIP REQUESTS -->
+            <div class="panel">
+                <div class="section-title">My Mentorship Requests</div>
+
+                {% if mentorship_requests and mentorship_requests|length > 0 %}
+                    <ol class="request-list">
+                        {% for req in mentorship_requests %}
+                            <li class="request-row">
+                                <!-- 1) index -->
+                                <span class="item-index">{{ loop.index }}.</span>
+
+                                <!-- 2) Mentor – Title (title clickable to review page) -->
+                                <div class="request-main">
+                                    <a href="{{ url_for('view_user', user_id=req.mentor.id) }}"
+                                    class="mentor-name link-primary">
+                                        {{ req.mentor.mentor_profile.full_name
+                                        if req.mentor.mentor_profile and req.mentor.mentor_profile.full_name
+                                        else req.mentor.username }}
+                                    </a>
+                                    <span class="request-separator"> | </span>
+                                    <a href="{{ url_for('review_mentor_request', req_id=req.id) }}"
+                                    class="request-title link-primary">
+                                        {{ req.title }}
+                                    </a>
+                                </div>
+
+                                <!-- 3) status pill on the right -->
+                                <span class="status-pill status-{{ req.status|lower() }}">
+                                    {{ req.status }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t sent any mentorship requests yet.
+                    </p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="dashboard-side">
+            <div class="panel">
+                <div class="section-title">Quick Links</div>
+                <p class="section-body">
+                    <a href="{{ url_for('project_list') }}" class="link-primary">
+                        Go to Project Board →
+                    </a><br>
+                    <a href="{{ url_for('forum') }}" class="link-primary">
+                        Go to Discussion Board →
+                    </a><br>
+                    {% if is_self is defined and is_self %}
+                        <a href="{{ url_for('logout') }}" class="link-primary">
+                            Log out →
+                        </a>
+                    {% endif %}
+                </p>
             </div>
         </div>
 
-        <!-- CONTAINER 2: MY PROJECTS -->
-        <div class="card">
-    <div class="card-header">My Projects</div>
-        {% if my_projects and my_projects|length > 0 %}
-            <ol style="padding-left: 20px; margin: 0;">
-                {% for project in my_projects %}
-                    <li style="margin-bottom: 6px;">
-                        <a 
-                            href="{{ url_for('project_detail', project_id=project.id) }}"
-                            style="text-decoration: none; font-weight: 500; color: #2a4d9b;"
-                        >
-                            {{ project.title }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ol>
-        {% else %}
-            <p>You haven’t created any projects yet.</p>
-        {% endif %}
     </div>
 
-
-
-        <!-- CONTAINER 3: MENTORSHIP REQUESTS -->
-        <div class="card">
-            <div class="card-header">My Mentorship Requests</div>
-
-            {% if mentorship_requests and mentorship_requests|length > 0 %}
-                <ul>
-                    {% for req in mentorship_requests %}
-                        <li>
-                            {# Lecturer name #}
-                            {{ req.mentor.full_name if req.mentor.full_name else req.mentor.username }}
-                            | Status: {{ req.status|capitalize }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>You haven’t sent any mentorship requests yet.</p>
-            {% endif %}
-        </div>
-
-    </div>
-
-    <a href="{{ url_for('project_list') }}">Go to Project Board</a><br>
-    <a href="{{ url_for('forum') }}">Go to Discussion Board</a><br>
-
-    {% if is_self is defined and is_self %}
-        <a href="{{ url_for('logout') }}">Press here to logout</a>
-    {% endif %}
+</div>
 </body>
 </html>

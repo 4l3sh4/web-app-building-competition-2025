@@ -9,6 +9,11 @@
     <h1>Welcome, {{ current_user.username }}!</h1>
     <p>You are logged in as: <strong>{{ current_user.role|capitalize }}</strong></p>
 
+    <label>Username</label>
+    <input type="text" value="{{ current_user.username }}" disabled>
+    <label>Email</label>
+    <input type="email" value="{{ current_user.email }}" disabled>
+
     <form method="POST" enctype="multipart/form-data">
     
     <div style="margin-bottom: 1rem;">

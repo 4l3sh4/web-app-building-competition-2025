@@ -223,13 +223,6 @@ html.dark-mode .tag {
     background: #111827;
 }
 
-.theme-toggle {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 50;
-}
-
 @media (max-width: 768px) {
     .page-header-row {
         flex-direction: column;
@@ -246,11 +239,6 @@ html.dark-mode .tag {
     .filters-row {
         align-items: stretch;
     }
-}
-
-.theme-toggle {
-    height: 50px !important;
-    width: 50px !important;
 }
 
 /* 2-column grid for cards */

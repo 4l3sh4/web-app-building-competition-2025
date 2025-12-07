@@ -7,183 +7,21 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile_view.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
-    <!--<style>
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #f5f5f7;
-            margin: 0;
-        }
-        .container {
-            max-width: 960px;
-            margin: 24px auto 40px;
-            padding: 0 16px;
-        }
-        .layout {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 16px;
-        }
-        @media (max-width: 800px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-        }
-        .card {
-            background: #fff;
-            border-radius: 10px;
-            padding: 16px 18px;
-            border: 1px solid #e2e2e2;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-            margin-bottom: 12px;
-        }
-        .header-card {
-            display: flex;
-            gap: 16px;
-        }
-        .pfp {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #ddd;
-        }
-        .name-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        h1 {
-            margin: 0;
-            font-size: 1.4rem;
-        }
-        .username {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .badge {
-            display: inline-block;
-            font-size: 0.8rem;
-            padding: 2px 10px;
-            border-radius: 999px;
-            border: 1px solid #23408e;
-            color: #23408e;
-        }
-        .subtitle {
-            margin-top: 4px;
-            font-size: 0.9rem;
-            color: #444;
-        }
-        .meta {
-            margin-top: 6px;
-            font-size: 0.86rem;
-            color: #555;
-        }
-        .section-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-        .muted {
-            color: #777;
-            font-size: 0.9rem;
-        }
-        .tag-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .tag {
-            font-size: 0.8rem;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: #eef1ff;
-            color: #1b2a60;
-        }
-        .item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .item-list li {
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-        }
-        .item-title {
-            font-weight: 600;
-        }
-        .item-meta {
-            font-size: 0.8rem;
-            color: #666;
-        }
-        .btn-main {
-            display: inline-block;
-            padding: 7px 16px;
-            border-radius: 999px;
-            border: none;
-            background: #23408e;
-            color: white;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-decoration: none;
-        }
-        .btn-main:hover {
-            background: #1b3268;
-        }
-        .link {
-            color: #23408e;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .link:hover {
-            text-decoration: underline;
-        }
-        .label {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .item-list li {
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-            display: flex;
-            gap: 6px;
-            align-items: baseline;
-        }
-
-        .item-index {
-            font-size: 0.85rem;
-            color: #6b7280;
-            min-width: 1.2rem;
-            text-align: right;
-        }
-
-        .item-title.link {
-            text-decoration: none;
-            color: #0e41b0;
-        }
-
-        .item-title.link:hover {
-            text-decoration: underline;
-        }
-
-    </style>-->
 </head>
 <body>
 <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
 
 <div class="shell">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% with messages = get_flashed_messages(category_filter=['request_sent']) %}
         {% if messages %}
-            {% for category, message in messages %}
+            {% for message in messages %}
                 <div class="panel flash-card">
                     <div class="muted">{{ message }}</div>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-
 
     <div class="profile-layout">
 

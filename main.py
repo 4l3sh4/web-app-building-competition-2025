@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, request, flash
+from flask import Flask, render_template, url_for, redirect, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -197,12 +197,16 @@ class MentorshipRequest(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     mentor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    mentorship_type = db.Column(db.String(50), nullable=False) 
+    mentorship_type = db.Column(db.String(50), nullable=False)
+    title = db.Column(db.String(100), nullable=False) 
     description = db.Column(db.Text, nullable=False)           
     document_filename = db.Column(db.String(255), nullable=True)  
 
-    status = db.Column(db.String(20), nullable=False, default='pending')  
+    status = db.Column(db.String(20), nullable=False, default='Pending')  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    mentor_comment = db.Column(db.Text, nullable=True)
+    responded_at = db.Column(db.DateTime, nullable=True)
 
     student = db.relationship('User', foreign_keys=[student_id], backref='sent_mentorship_requests')
     mentor = db.relationship('User', foreign_keys=[mentor_id], backref='received_mentorship_requests')
@@ -360,13 +364,18 @@ class MentorshipRequestForm(FlaskForm):
         validators=[InputRequired()]
     )
 
+    title = StringField(
+        "Title",
+        validators=[InputRequired(), Length(min=4, max=100)]
+    )
+
     description = TextAreaField(
         "Describe what you need.",
         validators=[InputRequired(), Length(min=10)]
     )
 
     document = FileField(
-        "Upload related document (optional)",
+        "Upload related document",
         validators=[
             FileAllowed(['pdf', 'doc', 'docx', 'zip', 'ppt', 'pptx'], 'Documents only!')
         ]
@@ -648,6 +657,12 @@ def get_faculty_full_name(code):
             return full
     return code  # fallback if not found
 
+def get_mentorship_type_label(code):
+    for value, label in MENTORSHIP_TYPE_CHOICES:
+        if value == code:
+            return label
+    return code
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -664,6 +679,11 @@ def dashboard():
         joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
         my_projects = owned_projects.union(joined_projects).order_by(Project.created_at.desc()).all()
 
+        mentorship_requests = (MentorshipRequest.query
+                        .filter_by(student_id=current_user.id)
+                        .order_by(MentorshipRequest.created_at.desc())
+                        .all())
+
         return render_template(
             'dashboard_student.html',
             student_profile=student_profile,
@@ -671,17 +691,35 @@ def dashboard():
             programme_full=programme_full,
             specialization_full=specialization_full,
             faculty_full=faculty_full,
-            my_projects=my_projects
+            my_projects=my_projects,
+            mentorship_requests=mentorship_requests,
+            is_self=True
         )
+    
     elif current_user.role == 'mentor':
         mentor_profile = current_user.mentor_profile
         position = mentor_profile.position if mentor_profile else None
+
+        incoming_requests = (MentorshipRequest.query
+                        .filter_by(mentor_id=current_user.id)
+                        .order_by(MentorshipRequest.created_at.desc())
+                        .all())
+        
+        accepted_mentees = (
+            MentorshipRequest.query
+                .filter_by(mentor_id=current_user.id, status='Accepted')
+                .order_by(MentorshipRequest.created_at.desc())
+                .all()
+        )
 
         return render_template(
             'dashboard_mentor.html',
             mentor_profile=mentor_profile,
             user=current_user,
-            position=position
+            position=position,
+            incoming_requests=incoming_requests,
+            accepted_mentees=accepted_mentees,
+            get_mentorship_type_label=get_mentorship_type_label,
         )
 
 @app.route('/users/<int:user_id>')
@@ -1204,6 +1242,7 @@ def request_mentorship(mentor_id):
             student_id=current_user.id,
             mentor_id=mentor.id,  
             mentorship_type=form.mentorship_type.data,
+            title=form.title.data.strip(),
             description=form.description.data.strip(),
             document_filename=filename  
         )
@@ -1211,13 +1250,52 @@ def request_mentorship(mentor_id):
         db.session.add(new_req)
         db.session.commit()
 
-        flash("Your mentorship request has been sent.", "success")
+        flash("Your mentorship request has been sent.", "request_sent")
         return redirect(url_for('view_user', user_id=mentor.id))
 
     return render_template(
         'request_mentorship.html',
         form=form,
         mentor=mentor 
+    )
+
+@app.route('/mentorship_requests/<int:req_id>', methods=['GET', 'POST'])
+@login_required
+def review_mentor_request(req_id):
+    req = MentorshipRequest.query.get_or_404(req_id)
+
+    # only the student or the mentor involved can see it
+    if current_user.id not in (req.student_id, req.mentor_id):
+        abort(403)
+
+    is_mentor = (current_user.id == req.mentor_id)
+    is_student = (current_user.id == req.student_id)
+
+    # Mentor can accept / decline with a comment
+    if is_mentor and request.method == 'POST':
+        action = request.form.get('action')
+        comment = request.form.get('mentor_comment', '').strip() 
+
+        if action == 'accept':
+            req.status = 'Accepted'
+        elif action == 'decline':
+            req.status = 'Declined'
+        else:
+            flash("Invalid action.", "error")
+            return redirect(url_for('review_mentor_request', req_id=req.id))
+
+        req.mentor_comment = comment
+        req.responded_at = datetime.utcnow()
+        db.session.commit()
+
+        flash(f"You have {req.status.lower()} this request.", "mentor_response")
+        return redirect(url_for('review_mentor_request', req_id=req.id))
+
+    return render_template(
+        'review_mentor_request.html',
+        req=req,
+        is_mentor=is_mentor,
+        is_student=is_student
     )
 
 if __name__ == '__main__':

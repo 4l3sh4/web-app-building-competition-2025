@@ -9,6 +9,13 @@
     <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Home</title>
+    <style>
+        body {
+            display: flex;
+            align-items: start;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode"><img src="{{ url_for('static', filename='assets/logo/ebhive_logo.png') }}" alt="logo"></button>

@@ -168,6 +168,10 @@
         You are logged in as:
         <strong>{{ current_user.role|capitalize }}</strong>
     </p>
+    <label>Username</label>
+    <input type="text" value="{{ current_user.username }}" disabled>
+    <label>Email</label>
+    <input type="email" value="{{ current_user.email }}" disabled>
 
     <form method="POST" enctype="multipart/form-data">
         {% if error %}
@@ -245,7 +249,7 @@
 
             {% set selected_expertise = [] %}
             {% if profile and profile.expertise %}
-                {% set selected_expertise = profile.expertise.split(',') %}
+                {% set selected_expertise = profile.expertise.split(';') %}
             {% endif %}
 
             <div class="expertise-list">
