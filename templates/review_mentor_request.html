@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mentorship Request – {{ req.title }}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+
+<div class="shell">
+
+    {% with messages = get_flashed_messages(category_filter=['mentor_response']) %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="panel flash-card">
+                    <div class="muted">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- HEADER -->
+    <div class="panel page-header">
+        <div class="page-header-row">
+            <div>
+                <h1 class="page-title">Mentorship Request</h1>
+                <p class="muted">
+                    Reviewing request from
+                    <strong>
+                        {{ req.student.student_profile.full_name
+                           if req.student.student_profile and req.student.student_profile.full_name
+                           else req.student.username }}
+                    </strong>
+                    to
+                    <strong>
+                        {{ req.mentor.mentor_profile.full_name
+                           if req.mentor.mentor_profile and req.mentor.mentor_profile.full_name
+                           else req.mentor.username }}
+                    </strong>.
+                </p>
+            </div>
+
+            <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="review-grid">
+
+        <!-- LEFT COLUMN: request details -->
+        <div class="review-main">
+
+            <!-- SUMMARY CARD -->
+            <div class="panel">
+                <div class="request-header">
+                    <div>
+                        <h2 class="request-title">{{ req.title }}</h2>
+                        <div class="request-subtitle">
+                            <span class="muted">Type:</span>
+                            <span>
+                                {% if mentor_type is defined %}
+                                    {{ mentor_type }}
+                                {% else %}
+                                    {{ req.mentorship_type }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="status-wrap">
+                        <span class="status-pill status-{{ req.status|lower }}">
+                            {{ req.status }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="request-meta">
+                    <div class="meta-row">
+                        <span class="label">From</span>
+                        <a href="{{ url_for('view_user', user_id=req.student.id) }}"
+                           class="link-primary">
+                            {{ req.student.student_profile.full_name
+                               if req.student.student_profile and req.student.student_profile.full_name
+                               else req.student.username }}
+                        </a>
+                    </div>
+                    <div class="meta-row">
+                        <span class="label">To</span>
+                        <a href="{{ url_for('view_user', user_id=req.mentor.id) }}"
+                           class="link-primary">
+                            {{ req.mentor.mentor_profile.full_name
+                               if req.mentor.mentor_profile and req.mentor.mentor_profile.full_name
+                               else req.mentor.username }}
+                        </a>
+                    </div>
+                    <div class="meta-row">
+                        <span class="label">Created</span>
+                        <span class="muted">
+                            {{ req.created_at.strftime("%Y-%m-%d %H:%M") }}
+                        </span>
+                    </div>
+
+                    {% if req.responded_at %}
+                        <div class="meta-row">
+                            <span class="label">Last updated</span>
+                            <span class="muted">
+                                {{ req.responded_at.strftime("%Y-%m-%d %H:%M") }}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    {% if req.document_filename %}
+                        <div class="meta-row">
+                            <span class="label">Attachment</span>
+                            <a href="{{ url_for('static',
+                                   filename='uploads/mentorship_docs/' + req.document_filename) }}"
+                               target="_blank"
+                               class="link-primary">
+                                {{ req.document_filename }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- DESCRIPTION CARD -->
+            <div class="panel">
+                <div class="section-title">Description</div>
+                <p class="body-text">
+                    {{ req.description }}
+                </p>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: review / response -->
+        <div class="review-side">
+
+            {% if is_mentor %}
+                <div class="panel">
+                    <div class="section-title">Review Request</div>
+                    <p class="muted small">
+                        Add an optional comment for the student, then accept or decline.
+                    </p>
+
+                    <form method="POST" class="review-form">
+                        <label for="mentor_comment" class="rm-label">
+                            Comments (optional)
+                        </label>
+                        <textarea
+                            id="mentor_comment"
+                            name="mentor_comment"
+                            rows="5"
+                            class="rm-textarea"
+                        >{{ req.mentor_comment or '' }}</textarea>
+
+                        <div class="review-actions">
+                            <button type="submit"
+                                    name="action"
+                                    value="accept"
+                                    class="btn-main btn-accept">
+                                Accept
+                            </button>
+                            <button type="submit"
+                                    name="action"
+                                    value="decline"
+                                    class="btn-main btn-decline">
+                                Decline
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            {% elif is_student %}
+                <div class="panel">
+                    <div class="section-title">Mentor's Response</div>
+
+                    <p class="muted">
+                        Current status:
+                        <span class="status-pill status-{{ req.status|lower }}">
+                            {{ req.status }}
+                        </span>
+                    </p>
+
+                    {% if req.mentor_comment %}
+                        <div class="mentor-comment">
+                            <div class="label">Comment</div>
+                            <p class="body-text">
+                                {{ req.mentor_comment }}
+                            </p>
+                        </div>
+                    {% else %}
+                        <p class="muted">
+                            No response from mentor yet.
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

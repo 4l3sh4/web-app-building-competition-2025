@@ -1,0 +1,314 @@
+/* layout shell matches other pages */
+.shell {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    position: relative;
+    z-index: 2;
+}
+
+.panel {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 6px 18px rgba(17,24,39,0.04);
+    border: 1px solid rgba(226,232,240,0.9);
+    margin-bottom: 16px;
+}
+
+.page-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.page-title {
+    font-size: 22px;
+    margin: 0 0 4px 0;
+    color: var(--accent-1);
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.back-link {
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: var(--accent-1);
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #e5edff;
+    background: linear-gradient(180deg,#ffffff,#fbfdff);
+    align-self: flex-start;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.back-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+}
+
+/* grid: main + side column */
+
+.review-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.review-main,
+.review-side {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .review-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* header summary inside request card */
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.request-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.request-subtitle {
+    margin-top: 2px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+}
+
+.status-wrap {
+    flex-shrink: 0;
+}
+
+/* meta rows */
+
+.request-meta {
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.meta-row {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    margin-bottom: 2px;
+}
+
+/* generic bits */
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.body-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.label {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+
+.link-primary {
+    color: #23408e;
+    text-decoration: none;
+}
+
+.link-primary:hover {
+    text-decoration: underline;
+}
+
+/* status pills */
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: #fef9c3;
+    color: #92400e;
+    border-color: #facc15;
+}
+
+.status-accepted {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #22c55e;
+}
+
+.status-declined {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #f97373;
+}
+
+/* review form (mentor side) */
+
+.review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.rm-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.rm-textarea {
+    width: 100%;
+    min-height: 110px;
+    border-radius: 10px;
+    border: 1px solid #e5edff;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.review-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-main {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(90deg,var(--accent-1), var(--accent-2));
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-decoration: none;
+}
+
+.btn-main:hover {
+    opacity: 0.95;
+}
+
+/* accept/decline variants */
+
+.btn-accept {
+    background: linear-gradient(90deg,#16a34a,#22c55e);
+}
+
+.btn-decline {
+    background: linear-gradient(90deg,#dc2626,#f97373);
+}
+
+/* student view comment box */
+
+.mentor-comment {
+    margin-top: 6px;
+}
+
+.small {
+    font-size: 0.85rem;
+}
+
+/* theme toggle icon (same as other pages) */
+
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    background: var(--card-bg);
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* ---------- dark mode tweaks ---------- */
+
+html.dark-mode .panel {
+    background: #111827;
+    border-color: #334155;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+html.dark-mode .request-title,
+html.dark-mode .section-title,
+html.dark-mode .label {
+    color: #e2e8f0;
+}
+
+html.dark-mode .request-subtitle,
+html.dark-mode .body-text {
+    color: #cbd5e1;
+}
+
+html.dark-mode .muted {
+    color: #9ca3af;
+}
+
+html.dark-mode .link-primary {
+    color: #93c5fd;
+}
+
+html.dark-mode .link-primary:hover {
+    color: #bfdbfe;
+}
+
+html.dark-mode .rm-textarea {
+    background: #020617;
+    border-color: #475569;
+    color: #e5e7eb;
+}
+
+html.dark-mode .rm-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+html.dark-mode .theme-toggle {
+    background: #020617;
+}

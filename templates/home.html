@@ -9,6 +9,13 @@
     <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Home</title>
+    <style>
+        body {
+            display: flex;
+            align-items: start;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode"><img src="{{ url_for('static', filename='assets/logo/ebhive_logo.png') }}" alt="logo"></button>
@@ -37,9 +44,10 @@
                     </div>
 
                     <div class="quick-links">
-                        <a class="link-btn" href="{{ url_for('profile') }}"><span class="kbd">P</span> My Profile</a>
+                        <a class="link-btn" href="{{ url_for('dashboard') }}"><span class="kbd">P</span> My Profile</a>
                         <a class="link-btn" href="{{ url_for('project_list') }}"><span class="kbd">B</span> Project & Opportunities Board</a>
                         <a class="link-btn" href="{{ url_for('forum') }}"><span class="kbd">F</span> Discussion Board</a>
+                        <a class="link-btn" href="{{ url_for('directory') }}"><span class="kbd">D</span> Directory</a>
                         <a class="link-btn" href="{{ url_for('logout') }}"><span class="kbd">L</span> Logout</a>
                     </div>
                 {% else %}

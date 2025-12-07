@@ -1,17 +1,25 @@
-from flask import Flask, render_template, url_for, redirect, request
+from flask import Flask, render_template, url_for, redirect, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import or_
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField, SelectField
 from wtforms.validators import InputRequired, Length, ValidationError, Email
+from flask_wtf.file import FileField, FileAllowed
 from flask_bcrypt import Bcrypt
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'TripleABattery'
+app.config['UPLOAD_FOLDER'] = 'static/uploads/pfp'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+app.config['MENTORSHIP_DOCUMENTS'] = os.path.join('static', 'uploads', 'mentorship_docs')
+os.makedirs(app.config['MENTORSHIP_DOCUMENTS'], exist_ok=True)
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -31,6 +39,177 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # 'student' or 'mentor'
 
+    # one-to-one relationships
+    student_profile = db.relationship('StudentProfile', backref='user', uselist=False)
+    mentor_profile = db.relationship('MentorProfile', backref='user', uselist=False)
+
+FACULTIES = [
+    ('fci', 'Faculty of Computing & Informatics (FCI)'),
+    ('faie', 'Faculty of Artificial Intelligence & Engineering (FAIE)'),
+    ('fist', 'Faculty of Information Science & Technology (FIST)'),
+    ('fet', 'Faculty of Engineering & Technology (FET)'),
+]
+
+PROGRAMME_LABELS = {
+    'fci': [
+        ('bcs', 'Bachelor of Computer Science (Hons.)'),
+        ('bit', 'Bachelor of Information Technology (Hons.)'),
+        ('dit', 'Diploma in Information Technology'),
+    ],
+
+    'faie': [
+        ('be', 'Bachelor of Engineering (Hons.)'),
+        ('bs', 'Bachelor of Science (Hons.)'),
+    ],
+
+    'fist': [
+        ('bcs', 'Bachelor of Computer Science (Hons.)'),
+        ('bit', 'Bachelor of Information Technology (Hons.)'),
+        ('bs', 'Bachelor of Science (Hons.) Bioinformatics'),
+        ('dit', 'Diploma in Information Technology'),
+    ],
+
+    'fet': [
+        ('be', 'Bachelor of Engineering (Hons.)'),
+        ('bee', 'Bachelor of Electronics Engineering (Hons.) (Robotics & Automation)'),
+        ('bme', 'Bachelor of Mechanical Engineering (Hons.)'),
+        ('dee', 'Diploma in Electronic Engineering'),
+        ('dme', 'Diploma in Mechanical Engineering'),
+    ],
+}
+
+SPECIALIZATION_CHOICES = {
+    'fci': {
+        'bcs': [
+            ('cyber', 'Cybersecurity'),
+            ('se', 'Software Engineering'),
+            ('ds', 'Data Science'),
+            ('game', 'Game Development'),
+        ],
+        'bit': [
+            ('is', 'Information Systems'),
+        ],
+    },
+    'faie': {
+        'be': [
+            ('electrical', 'Electrical'),
+            ('electronics', 'Electronics'),
+            ('telecomm', 'Electronic majoring in Telecommunication'),
+            ('computer', 'Electronic majoring in Computer'),
+        ],
+        'bs': [
+            ('ai', 'Applied Artificial Intelligence'),
+            ('ir', 'Intelligent Robotics'),
+        ],
+    },
+    'fist': {
+        'bcs': [
+            ('ai', 'Artificial Intelligence'),
+        ],
+        'bit': [
+            ('networking', 'Data Communications and Networking'),
+            ('business', 'Business Intelligence and Analytics'),
+            ('security', 'Security Technology'),
+        ],
+        'bs': [
+            ('bioinfo', 'Bioinformatics'),
+        ],
+    },
+    'fet': {
+        'be': [
+            ('telecomm', 'Electronic majoring in Telecommunication'),
+        ],
+    }
+}
+
+YEAR_CHOICES = [
+    ('1', 'Year 1'),
+    ('2', 'Year 2'),
+    ('3', 'Year 3'),
+    ('4', 'Year 4'),
+]
+
+EXPERTISE_CHOICES = [
+    "Artificial Intelligence & Machine Learning",
+    "Data Science & Analytics",
+    "Cybersecurity & Digital Forensics",
+    "Software & Application Development",
+    "Algorithms & High Performance Computing",
+    "Graphics, Games & Image Processing",
+    "IoT & Embedded Systems",
+    "Biotechnology & Bioinformatics",
+    "Electronics & Electrical Engineering",
+    "Mechanical & Manufacturing Engineering",
+    "Physics & Photonics",
+    "Sensors & Instrumentation",
+    "Robotics & Control Systems",
+    "Communication Systems & Wireless Technologies",
+]
+
+POSITION_CHOICES = [
+    "Lecturer",
+    "Senior Lecturer",
+    "Assistant Professor",
+    "Associate Professor",
+    "Specialist 2",
+]
+
+MENTORSHIP_TYPE_CHOICES = [
+    ('fyp', 'FYP / Final Year Project'),
+    ('course', 'Course assistance'),
+    ('personal', 'Personal project'),
+    ('research', 'Research'),
+    ('skill', 'Skill development'),
+]
+
+class StudentProfile(db.Model):
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id'),
+        primary_key=True
+    )
+
+    full_name = db.Column(db.String(100), nullable=False)
+    faculty = db.Column(db.String(10), nullable=False)      
+    programme = db.Column(db.String(10), nullable=False)    
+    year = db.Column(db.Integer, nullable=False)            
+    specialization = db.Column(db.String(20), nullable=True)  
+    bio = db.Column(db.Text)
+    pfp = db.Column(db.String(255), nullable=True)
+
+class MentorProfile(db.Model):
+    user_id = db.Column(
+        db.Integer, 
+        db.ForeignKey('user.id'), 
+        primary_key=True)
+
+    full_name = db.Column(db.String(100), nullable=False)
+    position = db.Column(db.String(10), nullable=False)          
+    faculty = db.Column(db.String(10), nullable=False)           
+    expertise = db.Column(db.String(150), nullable=False)         
+    office_location = db.Column(db.String(50))
+    linkedin_profile = db.Column(db.String(255))  
+    pfp = db.Column(db.String(255), nullable=True)
+
+class MentorshipRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    mentor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    mentorship_type = db.Column(db.String(50), nullable=False)
+    title = db.Column(db.String(100), nullable=False) 
+    description = db.Column(db.Text, nullable=False)           
+    document_filename = db.Column(db.String(255), nullable=True)  
+
+    status = db.Column(db.String(20), nullable=False, default='Pending')  
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    mentor_comment = db.Column(db.Text, nullable=True)
+    responded_at = db.Column(db.DateTime, nullable=True)
+
+    student = db.relationship('User', foreign_keys=[student_id], backref='sent_mentorship_requests')
+    mentor = db.relationship('User', foreign_keys=[mentor_id], backref='received_mentorship_requests')
 
 class Project(db.Model):
     """Project & Opportunities Board entries"""
@@ -178,6 +357,31 @@ class LoginForm(FlaskForm):
     )
     submit = SubmitField("Login")
 
+class MentorshipRequestForm(FlaskForm):
+    mentorship_type = SelectField(
+        "Type of mentorship",
+        choices=MENTORSHIP_TYPE_CHOICES,
+        validators=[InputRequired()]
+    )
+
+    title = StringField(
+        "Title",
+        validators=[InputRequired(), Length(min=4, max=100)]
+    )
+
+    description = TextAreaField(
+        "Describe what you need.",
+        validators=[InputRequired(), Length(min=10)]
+    )
+
+    document = FileField(
+        "Upload related document",
+        validators=[
+            FileAllowed(['pdf', 'doc', 'docx', 'zip', 'ppt', 'pptx'], 'Documents only!')
+        ]
+    )
+
+    submit = SubmitField("Submit request")
 
 class ProjectForm(FlaskForm):
     title = StringField(
@@ -271,7 +475,7 @@ def login():
         if user:
             if bcrypt.check_password_hash(user.password, form.password.data):
                 login_user(user)
-                return redirect(url_for('profile'))
+                return redirect(url_for('dashboard'))
             else:
                 error_message = "Invalid password. Please try again."
         else:
@@ -291,23 +495,273 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('login'))
+        login_user(new_user)
+
+        # Then redirect to profile setup
+        if new_user.role == 'student':
+            return redirect(url_for('edit_student_profile'))
+        else:
+            return redirect(url_for('edit_mentor_profile'))
 
     return render_template('register.html', form=form)
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/profile')
+@app.route('/student/profile/edit', methods=['GET', 'POST'])
 @login_required
-def profile():
-    return render_template('profile.html', user=current_user, is_self=True)
+def edit_student_profile():
+    if current_user.role != 'student':
+        return redirect(url_for('home'))  
 
+    profile = StudentProfile.query.filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        faculty = request.form.get('faculty')          
+        programme = request.form.get('programme')      
+        year = int(request.form.get('year'))          
+        specialization = request.form.get('specialization') or None
+        bio = request.form.get('bio')
+
+        if not profile:
+            profile = StudentProfile(user_id=current_user.id)
+
+        #handle file upload
+        file = request.files.get('pfp')
+        if file and file.filename != '' and allowed_file(file.filename):
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(f"{current_user.id}.{ext}")  # e.g. 3.jpg
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            profile.pfp = filename
+
+        profile.full_name = full_name
+        profile.faculty = faculty
+        profile.programme = programme
+        profile.year = year
+        profile.specialization = specialization
+        profile.bio = bio
+
+        db.session.add(profile)
+        db.session.commit()
+
+        return redirect(url_for('dashboard'))
+
+    # GET: show form with existing values if profile exists
+    return render_template(
+        'edit_student.html',
+        profile=profile,
+        FACULTIES=FACULTIES,
+        PROGRAMME_LABELS=PROGRAMME_LABELS,
+        YEAR_CHOICES=YEAR_CHOICES,
+        SPECIALIZATION_CHOICES=SPECIALIZATION_CHOICES,
+    )
+
+@app.route('/mentor/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_mentor_profile():
+    if current_user.role != 'mentor':
+        return redirect(url_for('home'))
+
+    profile = MentorProfile.query.filter_by(user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        position = request.form.get('position')
+        faculty = request.form.get('faculty')
+        office_location = request.form.get('office_location') or None
+        linkedin_profile = request.form.get('linkedin_profile') or None
+
+        expertise_list = request.form.getlist('expertise')
+
+        if not (full_name and position and faculty and expertise_list):
+            error = "Please fill in all required fields."
+            return render_template(
+                'edit_mentor.html',
+                profile=profile,
+                FACULTIES=FACULTIES,
+                EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+                POSITION_CHOICES=POSITION_CHOICES,
+                error=error,
+            )
+        
+        if len(expertise_list) > 3:
+            error = "You can select a maximum of 3 expertise areas."
+            # keep what they already selected
+            if not profile:
+                profile = MentorProfile(user_id=current_user.id)
+            profile.expertise = ",".join(expertise_list)
+            return render_template(
+                'edit_mentor.html',
+                profile=profile,
+                FACULTIES=FACULTIES,
+                EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+                POSITION_CHOICES=POSITION_CHOICES,
+                error=error,
+            )
+
+        if not profile:
+            profile = MentorProfile(user_id=current_user.id)
+
+        #handle file upload
+        file = request.files.get('pfp')
+        if file and file.filename != '' and allowed_file(file.filename):
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(f"{current_user.id}.{ext}")  # e.g. 5.png
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            profile.pfp = filename
+
+        profile.full_name = full_name.strip()
+        profile.position = position
+        profile.faculty = faculty
+        profile.expertise = ";".join(expertise_list)
+        profile.office_location = office_location.strip() if office_location else None
+        profile.linkedin_profile = linkedin_profile.strip() if linkedin_profile else None
+
+        db.session.add(profile)
+        db.session.commit()
+
+        return redirect(url_for('dashboard'))  
+
+    # GET: show form with existing values if profile exists
+    return render_template(
+        'edit_mentor.html',
+        profile=profile,
+        FACULTIES=FACULTIES,
+        EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+        POSITION_CHOICES=POSITION_CHOICES,
+    )
+
+def get_programme_full_name(code):
+    for fac, programmes in PROGRAMME_LABELS.items():
+        for short, full in programmes:
+            if short == code:
+                return full
+    return code  # fallback if not found
+
+def get_spec_full_name(code):
+    for fac, programmes in SPECIALIZATION_CHOICES.items():
+        for prog_code, specs in programmes.items():
+            for short, full in specs:
+                if short == code:
+                    return full
+    return code  # fallback if not found
+
+def get_faculty_full_name(code):
+    for short, full in FACULTIES:
+        if short == code:
+            return full
+    return code  # fallback if not found
+
+def get_mentorship_type_label(code):
+    for value, label in MENTORSHIP_TYPE_CHOICES:
+        if value == code:
+            return label
+    return code
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    if current_user.role == 'student':
+        student_profile = current_user.student_profile
+        programme_full = get_programme_full_name(student_profile.programme)
+        specialization_full = None
+        if student_profile.specialization:
+            specialization_full = get_spec_full_name(student_profile.specialization)
+        faculty_full = get_faculty_full_name(student_profile.faculty)
+
+        owned_projects = Project.query.filter_by(owner_id=current_user.id)
+        joined_project_ids = db.session.query(ProjectMember.project_id).filter_by(user_id=current_user.id)
+        joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
+        my_projects = owned_projects.union(joined_projects).order_by(Project.created_at.desc()).all()
+
+        mentorship_requests = (MentorshipRequest.query
+                        .filter_by(student_id=current_user.id)
+                        .order_by(MentorshipRequest.created_at.desc())
+                        .all())
+
+        my_threads = Thread.query.filter_by(creator_id=current_user.id) \
+                                    .order_by(Thread.created_at.desc()) \
+                                    .all()
+
+        return render_template(
+            'dashboard_student.html',
+            student_profile=student_profile,
+            user=current_user,
+            programme_full=programme_full,
+            specialization_full=specialization_full,
+            faculty_full=faculty_full,
+            my_projects=my_projects,
+            mentorship_requests=mentorship_requests,
+            my_threads=my_threads,
+            is_self=True
+        )
+    
+    elif current_user.role == 'mentor':
+        mentor_profile = current_user.mentor_profile
+        position = mentor_profile.position if mentor_profile else None
+
+        incoming_requests = (MentorshipRequest.query
+                        .filter_by(mentor_id=current_user.id)
+                        .order_by(MentorshipRequest.created_at.desc())
+                        .all())
+        
+        accepted_mentees = (
+            MentorshipRequest.query
+                .filter_by(mentor_id=current_user.id, status='Accepted')
+                .order_by(MentorshipRequest.created_at.desc())
+                .all()
+        )
+
+        return render_template(
+            'dashboard_mentor.html',
+            mentor_profile=mentor_profile,
+            user=current_user,
+            position=position,
+            incoming_requests=incoming_requests,
+            accepted_mentees=accepted_mentees,
+            get_mentorship_type_label=get_mentorship_type_label,
+        )
 
 @app.route('/users/<int:user_id>')
 @login_required
 def view_user(user_id):
     user = User.query.get_or_404(user_id)
     is_self = (user.id == current_user.id)
-    return render_template('profile.html', user=user, is_self=is_self)
+
+    student_projects = []
+    student_threads = []
+
+    if user.role == 'student':
+        # use the viewed user's id, not current_user
+        owned_projects = Project.query.filter_by(owner_id=user.id)
+
+        joined_project_ids = db.session.query(ProjectMember.project_id) \
+                                       .filter_by(user_id=user.id)
+        joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
+
+        student_projects = owned_projects.union(joined_projects) \
+                                         .order_by(Project.created_at.desc()) \
+                                         .all()
+
+        student_threads = Thread.query.filter_by(creator_id=user.id) \
+                                      .order_by(Thread.created_at.desc()) \
+                                      .limit(5).all()
+
+    return render_template(
+        'profile_view.html',
+        user=user,
+        is_self=is_self,
+        student_projects=student_projects,
+        student_threads=student_threads,
+        get_programme_full_name=get_programme_full_name,
+        get_spec_full_name=get_spec_full_name,
+        get_faculty_full_name=get_faculty_full_name,
+    )
 
 
 @app.route('/logout')
@@ -361,7 +815,6 @@ def my_projects():
         selected_category=selected_category,
         mine=True
     )
-
 
 @app.route('/projects/create', methods=['GET', 'POST'])
 @login_required
@@ -668,6 +1121,189 @@ def downvote_thread(thread_id):
     db.session.commit()
     return redirect(url_for('thread_detail', thread_id=thread.id))
 
+# ---------------------
+# DIRECTORY
+# ---------------------
+@app.route('/directory')
+@login_required
+def directory():
+    q = request.args.get('q', '').strip()
+    role_filter = request.args.get('role', 'all')  #
+
+    faculty_filter = request.args.getlist('faculty')     
+    expertise_filter = request.args.getlist('expertise')  
+
+    combined_list = []
+
+    # ---------- STUDENTS ----------
+    if role_filter in ('all', 'student'):
+        student_query = StudentProfile.query.join(User, StudentProfile.user_id == User.id)
+        student_query = student_query.filter(User.id != current_user.id)
+
+        if q:
+            student_query = student_query.filter(StudentProfile.full_name.ilike(f"%{q}%"))
+
+        # only filter by faculty if at least one was selected
+        if faculty_filter:
+            student_query = student_query.filter(StudentProfile.faculty.in_(faculty_filter))
+
+        students = [
+            {
+                "type": "student",
+                "id": s.user_id,
+                "name": s.full_name,
+                "faculty": s.faculty,
+                "programme": s.programme,
+                "specialization": s.specialization,
+                "year": s.year,
+                "pfp": s.pfp,
+            }
+            for s in student_query.all()
+        ]
+
+        combined_list.extend(students)
+
+    # ---------- MENTORS ----------
+    if role_filter in ('all', 'mentor'):
+        mentor_query = MentorProfile.query.join(User, MentorProfile.user_id == User.id)
+        mentor_query = mentor_query.filter(User.id != current_user.id)
+
+        if q:
+            mentor_query = mentor_query.filter(MentorProfile.full_name.ilike(f"%{q}%"))
+
+        if faculty_filter:
+            mentor_query = mentor_query.filter(MentorProfile.faculty.in_(faculty_filter))
+
+        if expertise_filter:
+            conditions = [
+                MentorProfile.expertise.ilike(f"%{e}%")
+                for e in expertise_filter
+            ]
+            mentor_query = mentor_query.filter(or_(*conditions))
+
+        mentors = [
+            {
+                "type": "mentor",
+                "id": m.user_id,
+                "name": m.full_name,
+                "faculty": m.faculty,
+                "position": m.position,
+                "expertise": m.expertise,
+                "pfp": m.pfp,
+            }
+            for m in mentor_query.all()
+        ]
+
+        combined_list.extend(mentors)
+
+    combined_list.sort(key=lambda x: x["name"].lower())
+
+    return render_template(
+        "directory.html",
+        combined_list=combined_list,
+        get_programme_full_name=get_programme_full_name,
+        get_spec_full_name=get_spec_full_name,
+        FACULTIES=FACULTIES,
+        EXPERTISE_CHOICES=EXPERTISE_CHOICES,
+        search_query=q,
+        role_filter=role_filter,
+        faculty_filter=faculty_filter,       
+        expertise_filter=expertise_filter,   
+    )
+
+# ---------------------
+# MENTORSHIP REQUESTS
+# ---------------------
+@app.route('/request_mentorship/<int:mentor_id>', methods=['GET', 'POST'])
+@login_required
+def request_mentorship(mentor_id):
+    # only students can send mentorship requests
+    if current_user.role != 'student':
+        flash("Only students can request mentorship.", "error")
+        return redirect(url_for('dashboard'))
+
+    # get the mentor user
+    mentor = User.query.get_or_404(mentor_id)
+
+    # make sure the target is actually a mentor
+    if mentor.role != 'mentor':
+        flash("You can only request mentorship from mentor accounts.", "error")
+        return redirect(url_for('directory'))
+
+    form = MentorshipRequestForm()
+
+    if form.validate_on_submit():
+        filename = None
+
+        if form.document.data:
+            file = form.document.data
+            if file.filename:  
+                safe_name = secure_filename(file.filename)
+                os.makedirs(app.config['MENTORSHIP_DOCUMENTS'], exist_ok=True)
+                upload_path = os.path.join(app.config['MENTORSHIP_DOCUMENTS'], safe_name)
+                file.save(upload_path)
+                filename = safe_name
+
+        new_req = MentorshipRequest(
+            student_id=current_user.id,
+            mentor_id=mentor.id,  
+            mentorship_type=form.mentorship_type.data,
+            title=form.title.data.strip(),
+            description=form.description.data.strip(),
+            document_filename=filename  
+        )
+
+        db.session.add(new_req)
+        db.session.commit()
+
+        flash("Your mentorship request has been sent.", "request_sent")
+        return redirect(url_for('view_user', user_id=mentor.id))
+
+    return render_template(
+        'request_mentorship.html',
+        form=form,
+        mentor=mentor 
+    )
+
+@app.route('/mentorship_requests/<int:req_id>', methods=['GET', 'POST'])
+@login_required
+def review_mentor_request(req_id):
+    req = MentorshipRequest.query.get_or_404(req_id)
+
+    # only the student or the mentor involved can see it
+    if current_user.id not in (req.student_id, req.mentor_id):
+        abort(403)
+
+    is_mentor = (current_user.id == req.mentor_id)
+    is_student = (current_user.id == req.student_id)
+
+    # Mentor can accept / decline with a comment
+    if is_mentor and request.method == 'POST':
+        action = request.form.get('action')
+        comment = request.form.get('mentor_comment', '').strip() 
+
+        if action == 'accept':
+            req.status = 'Accepted'
+        elif action == 'decline':
+            req.status = 'Declined'
+        else:
+            flash("Invalid action.", "error")
+            return redirect(url_for('review_mentor_request', req_id=req.id))
+
+        req.mentor_comment = comment
+        req.responded_at = datetime.utcnow()
+        db.session.commit()
+
+        flash(f"You have {req.status.lower()} this request.", "mentor_response")
+        return redirect(url_for('review_mentor_request', req_id=req.id))
+
+    return render_template(
+        'review_mentor_request.html',
+        req=req,
+        is_mentor=is_mentor,
+        is_student=is_student,
+        mentor_type=get_mentorship_type_label(req.mentorship_type)
+    )
 
 if __name__ == '__main__':
     with app.app_context():

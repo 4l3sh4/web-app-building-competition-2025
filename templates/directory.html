@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Directory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/directory.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+
+    <div class="shell">
+        <!-- Header panel -->
+        <div class="panel page-header">
+            <div class="page-header-row">
+                <div>
+                    <h1 class="page-title">Directory</h1>
+                    <p class="muted">
+                        Browse students and mentors, filter by faculty, role, and expertise.
+                    </p>
+                </div>
+                <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+            </div>
+        </div>
+
+        <!-- Filters panel -->
+        <div class="panel filters-panel">
+            <form method="get">
+                <!-- Row 1: Search + Faculty -->
+                <div class="filters-row">
+                    <input
+                        type="text"
+                        name="q"
+                        class="input-text"
+                        placeholder="Search by name..."
+                        value="{{ search_query or '' }}"
+                    >
+
+                    <div class="dropdown" id="faculty-dropdown">
+                        <button type="button" class="dropdown-btn" onclick="toggleDropdown('faculty-dropdown')">
+                            Faculties ▼
+                        </button>
+                        <div class="dropdown-content">
+                            {% for code, name in FACULTIES %}
+                            <label>
+                                <input type="checkbox"
+                                       name="faculty"
+                                       value="{{ code }}"
+                                       {% if code in faculty_filter %}checked{% endif %}>
+                                {{ code|upper }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Role + Expertise + Submit -->
+                <div class="filters-row second">
+                    <!-- role filter -->
+                    <div class="role-filters">
+                        <label>
+                            <input type="radio" name="role" value="all"
+                                   {% if role_filter == 'all' %}checked{% endif %}
+                                   onclick="updateExpertiseVisibility()">
+                            All
+                        </label>
+                        <label>
+                            <input type="radio" name="role" value="student"
+                                   {% if role_filter == 'student' %}checked{% endif %}
+                                   onclick="updateExpertiseVisibility()">
+                            Students
+                        </label>
+                        <label>
+                            <input type="radio" name="role" value="mentor"
+                                   {% if role_filter == 'mentor' %}checked{% endif %}
+                                   onclick="updateExpertiseVisibility()">
+                            Mentors
+                        </label>
+                    </div>
+
+                    <span class="filters-divider">|</span>
+
+                    <!-- expertise filter -->
+                    <div id="expertise-section" style="display:none;">
+                        <div class="dropdown" id="expertise-dropdown">
+                            <button type="button" class="dropdown-btn" onclick="toggleDropdown('expertise-dropdown')">
+                                Expertise ▼
+                            </button>
+                            <div class="dropdown-content">
+                                {% for area in EXPERTISE_CHOICES %}
+                                <label>
+                                    <input type="checkbox"
+                                           name="expertise"
+                                           value="{{ area }}"
+                                           {% if area in expertise_filter %}checked{% endif %}>
+                                    {{ area }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-filter-submit">Search</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results panel -->
+        <div class="panel list-panel">
+        {% if combined_list %}
+            <div class="list">
+                {% for item in combined_list %}
+                    {% set pfp = item.pfp or 'default_pfp.png' %}
+                    <div class="card user-card">
+                        <div class="user-card-header">
+                            <div class="user-pfp-wrap">
+                                <img src="{{ url_for('static', filename='uploads/pfp/' ~ pfp) }}"
+                                    alt="{{ item.name }} avatar"
+                                    class="user-pfp">
+                            </div>
+
+                            <div class="user-main">
+                                <div class="user-name-row">
+                                <a href="{{ url_for('view_user', user_id=item.id) }}" class="name-link">
+                                    {{ item.name }}
+                                </a>
+
+                                {% if item.type == 'student' %}
+                                    <span class="role-tag student-tag">STUDENT</span>
+                                {% else %}
+                                    <span class="role-tag mentor-tag">MENTOR</span>
+                                {% endif %}
+                            </div>
+
+
+                                <div class="subtext">
+                                    {% if item.type == 'student' %}
+                                        {{ item.faculty|upper }} | Year {{ item.year }} Student
+                                        {% endif %}
+                                        <br>
+                                        {{ get_programme_full_name(item.programme) }}
+                                        {% if item.specialization %}
+                                            · {{ get_spec_full_name(item.specialization) }}
+                                    {% else %}
+                                        {{ item.faculty|upper }} | {{ item.position }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if item.type == 'mentor' and item.expertise %}
+                            <div class="tags">
+                                {% for area in item.expertise.split(';') %}
+                                    <span class="tag">{{ area|trim }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="muted">No users found for the selected filters.</p>
+        {% endif %}
+    </div>
+
+    </div>
+
+<script>
+    function toggleDropdown(id) {
+        document.getElementById(id).classList.toggle("show");
+    }
+
+    document.addEventListener("click", function(e) {
+        document.querySelectorAll(".dropdown").forEach(dd => {
+            if (!dd.contains(e.target)) dd.classList.remove("show");
+        });
+    });
+
+    function updateExpertiseVisibility() {
+        const pickedRole = document.querySelector('input[name="role"]:checked').value;
+        const section = document.getElementById("expertise-section");
+        section.style.display = (pickedRole === "mentor") ? "block" : "none";
+    }
+
+    function updateFacultyLabel() {
+        const dropdown = document.getElementById("faculty-dropdown");
+        const btn = dropdown.querySelector(".dropdown-btn");
+        const checked = dropdown.querySelectorAll("input[type=checkbox]:checked");
+
+        if (checked.length === 0) {
+            btn.textContent = "Faculties ▼";
+        } else {
+            let values = [];
+            checked.forEach(cb => values.push(cb.value.toUpperCase()));
+            btn.textContent = values.join(", ") + " ▼";
+        }
+    }
+
+    function updateExpertiseLabel() {
+        const dropdown = document.getElementById("expertise-dropdown");
+        if (!dropdown) return;
+
+        const btn = dropdown.querySelector(".dropdown-btn");
+        const checked = dropdown.querySelectorAll("input[type=checkbox]:checked");
+
+        if (checked.length === 0) {
+            btn.textContent = "Expertise ▼";
+        } else if (checked.length === 1) {
+            btn.textContent = checked[0].value + " ▼";
+        } else {
+            btn.textContent = checked.length + " selected ▼";
+        }
+    }
+
+    function registerDropdownUpdates() {
+        document.querySelectorAll("#faculty-dropdown input[type=checkbox]").forEach(cb =>
+            cb.addEventListener("change", updateFacultyLabel)
+        );
+
+        const expertiseDropdown = document.getElementById("expertise-dropdown");
+        if (expertiseDropdown) {
+            expertiseDropdown.querySelectorAll("input[type=checkbox]").forEach(cb =>
+                cb.addEventListener("change", updateExpertiseLabel)
+            );
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updateExpertiseVisibility();
+        registerDropdownUpdates();
+        updateFacultyLabel();
+        updateExpertiseLabel();
+    });
+</script>
+</body>
+</html>
