@@ -37,7 +37,7 @@
                 <div class="summary-row">
                     {% set pfp_filename = student_profile.pfp if student_profile.pfp else 'default_pfp.png' %}
                     <div class="summary-pfp-wrap">
-                        <img src="{{ url_for('static', filename='assets/pfp/' ~ pfp_filename) }}"
+                        <img src="{{ url_for('static', filename='uploads/pfp/' ~ pfp_filename) }}"
                              alt="Profile Picture"
                              class="summary-pfp">
                     </div>

@@ -34,10 +34,10 @@
         <!-- LEFT: pfp -->
         <div class="pfp-wrap">
             {% if profile and profile.pfp %}
-                <img src="{{ url_for('static', filename='assets/pfp/' + profile.pfp) }}"
+                <img src="{{ url_for('static', filename='uploads/pfp/' + profile.pfp) }}"
                      alt="Profile picture" class="pfp">
             {% else %}
-                <img src="{{ url_for('static', filename='assets/pfp/default_pfp.png') }}"
+                <img src="{{ url_for('static', filename='uploads/pfp/default_pfp.png') }}"
                      alt="Default profile picture" class="pfp">
             {% endif %}
         </div>
