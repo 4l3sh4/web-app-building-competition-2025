@@ -684,6 +684,10 @@ def dashboard():
                         .order_by(MentorshipRequest.created_at.desc())
                         .all())
 
+        my_threads = Thread.query.filter_by(creator_id=current_user.id) \
+                                    .order_by(Thread.created_at.desc()) \
+                                    .all()
+
         return render_template(
             'dashboard_student.html',
             student_profile=student_profile,
@@ -693,6 +697,7 @@ def dashboard():
             faculty_full=faculty_full,
             my_projects=my_projects,
             mentorship_requests=mentorship_requests,
+            my_threads=my_threads,
             is_self=True
         )
     
@@ -1296,7 +1301,8 @@ def review_mentor_request(req_id):
         'review_mentor_request.html',
         req=req,
         is_mentor=is_mentor,
-        is_student=is_student
+        is_student=is_student,
+        mentor_type=get_mentorship_type_label(req.mentorship_type)
     )
 
 if __name__ == '__main__':

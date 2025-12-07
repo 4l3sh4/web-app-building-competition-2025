@@ -63,8 +63,8 @@
                         <div class="request-subtitle">
                             <span class="muted">Type:</span>
                             <span>
-                                {% if get_mentorship_type_label is defined %}
-                                    {{ get_mentorship_type_label(req.mentorship_type) }}
+                                {% if mentor_type is defined %}
+                                    {{ mentor_type }}
                                 {% else %}
                                     {{ req.mentorship_type }}
                                 {% endif %}

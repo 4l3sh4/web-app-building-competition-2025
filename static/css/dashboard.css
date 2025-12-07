@@ -521,3 +521,34 @@ html.dark-mode .status-rejected {
     background: #431022;
     color: #fb7185;
 }
+
+
+/* ====================
+   SIMPLE ITEM LIST
+=======================*/
+.item-list.simple-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.item-list.simple-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.item-index {
+    width: 24px;
+    font-weight: 500;
+}
+
+.item-title {
+    font-weight: 600;
+}
+
+.item-meta {
+    font-size: 0.9rem;
+    color: #7b7b7b; /* soft muted grey */
+}

@@ -72,14 +72,15 @@
                 <div class="section-title">My Projects</div>
 
                 {% if my_projects and my_projects|length > 0 %}
-                    <ol class="item-list numbered-list">
+                    <ol class="item-list simple-list">
                         {% for project in my_projects %}
                             <li>
                                 <span class="item-index">{{ loop.index }}.</span>
                                 <a href="{{ url_for('project_detail', project_id=project.id) }}"
-                                   class="item-title link-primary">
+                                class="item-title link-primary">
                                     {{ project.title }}
                                 </a>
+                                <span class="item-meta">— {{ project.project_type }}</span>
                             </li>
                         {% endfor %}
                     </ol>
@@ -89,6 +90,7 @@
                     </p>
                 {% endif %}
             </div>
+
 
             <!-- MY MENTORSHIP REQUESTS -->
             <div class="panel">
@@ -126,6 +128,30 @@
                 {% else %}
                     <p class="muted section-body">
                         You haven’t sent any mentorship requests yet.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- MY THREADS -->
+            <div class="panel">
+                <div class="section-title">My Threads</div>
+
+                {% if my_threads and my_threads|length > 0 %}
+                    <ol class="item-list simple-list">
+                        {% for thread in my_threads %}
+                            <li>
+                                <span class="item-index">{{ loop.index }}.</span>
+                                <a href="{{ url_for('thread_detail', thread_id=thread.id) }}"
+                                class="item-title link-primary">
+                                    {{ thread.title }}
+                                </a>
+                                <span class="item-meta">— {{ thread.category }}</span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t created any threads yet.
                     </p>
                 {% endif %}
             </div>
