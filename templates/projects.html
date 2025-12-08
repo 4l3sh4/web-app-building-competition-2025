@@ -54,7 +54,7 @@
                     {% endif %}
                     <h3>{{ project.title }}</h3>
                     <p class="project-excerpt">{{ project.description|truncate(220) }}</p>
-                    Posted by {{ project.owner.username }} · {{ project.created_at.strftime('%Y-%m-%d') }}
+                    <p class="posted-by">Posted by {{ project.owner.username }} · {{ project.created_at.strftime('%Y-%m-%d') }}</p>
                 </a>
             {% endfor %}
         </div>

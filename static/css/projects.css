@@ -51,6 +51,7 @@ html.dark-mode {
 
 /* Buttons */
 .btn {
+	white-space: nowrap;
 	padding: 10px 16px;
 	border-radius: 8px;
 	border: none;
@@ -177,6 +178,10 @@ html.dark-mode .project-card:hover .project-type {
 	flex-grow: 1;
 }
 
+.posted-by {
+	white-space: nowrap;
+}
+
 .reply-count-badge {
 	background: var(--accent-2);
 	color: white;
@@ -217,15 +222,22 @@ html.dark-mode .btn-ghost:hover {
 }
 
 /* Responsive Design */
-@media (max-width: 1100px) {
+@media (max-width: 960px) {
 	.projects-header {
 		flex-direction: column;
-		align-items: flex-start;
 		margin-bottom: 24px;
 	}
 
-	.projects-header h1 {
-		font-size: 28px;
+	.projects-grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+	}
+}
+
+@media (max-width: 800px) {
+	.projects-header {
+		flex-direction: column;
+		margin-bottom: 24px;
 	}
 
 	.projects-grid {
@@ -234,13 +246,9 @@ html.dark-mode .btn-ghost:hover {
 	}
 }
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
 	.projects-wrapper {
 		padding: 0 12px;
-	}
-
-	.projects-header h1 {
-		font-size: 24px;
 	}
 
 	.projects-grid {
