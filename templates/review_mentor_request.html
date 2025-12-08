@@ -141,7 +141,8 @@
         <div class="review-side">
 
             {% if is_mentor %}
-                <div class="panel">
+            <div class="panel">
+                {% if req.status == 'Pending' %}
                     <div class="section-title">Review Request</div>
                     <p class="muted small">
                         Add an optional comment for the student, then accept or decline.
@@ -162,18 +163,39 @@
                             <button type="submit"
                                     name="action"
                                     value="accept"
-                                    class="btn-main btn-accept">
+                                    class="btn-main btn-accept"
+                                    onclick="return confirm('Accept this request? This cannot be undone.');">
                                 Accept
                             </button>
                             <button type="submit"
                                     name="action"
                                     value="decline"
-                                    class="btn-main btn-decline">
+                                    class="btn-main btn-decline"
+                                    onclick="return confirm('Decline this request? This cannot be undone.');">
                                 Decline
                             </button>
                         </div>
                     </form>
-                </div>
+                {% else %}
+                    <div class="section-title">Your Decision</div>
+
+                    <p class="muted">
+                        You have already
+                            {{ req.status|lower }}
+                        </span>
+                        this request.
+                    </p>
+
+                    {% if req.mentor_comment %}
+                        <div class="mentor-comment">
+                            <div class="label">Your comment</div>
+                            <p class="body-text">
+                                {{ req.mentor_comment }}
+                            </p>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
 
             {% elif is_student %}
                 <div class="panel">
