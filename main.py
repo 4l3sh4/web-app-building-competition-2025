@@ -573,43 +573,48 @@ def edit_mentor_profile():
         faculty = request.form.get('faculty')
         office_location = request.form.get('office_location') or None
         linkedin_profile = request.form.get('linkedin_profile') or None
-
         expertise_list = request.form.getlist('expertise')
 
+        # missing required fields
         if not (full_name and position and faculty and expertise_list):
-            error = "Please fill in all required fields."
+            flash("Please fill in all required fields.", "error")
             return render_template(
                 'edit_mentor.html',
                 profile=profile,
                 FACULTIES=FACULTIES,
                 EXPERTISE_CHOICES=EXPERTISE_CHOICES,
                 POSITION_CHOICES=POSITION_CHOICES,
-                error=error,
             )
-        
+
+        # too many expertise selections
         if len(expertise_list) > 3:
-            error = "You can select a maximum of 3 expertise areas."
-            # keep what they already selected
+            flash("You can select a maximum of 3 expertise areas.", "error")
+
+            # keep what they already selected 
             if not profile:
                 profile = MentorProfile(user_id=current_user.id)
-            profile.expertise = ",".join(expertise_list)
+            profile.full_name = full_name
+            profile.position = position
+            profile.faculty = faculty
+            profile.office_location = office_location
+            profile.linkedin_profile = linkedin_profile
+            profile.expertise = ";".join(expertise_list)  
+
             return render_template(
                 'edit_mentor.html',
                 profile=profile,
                 FACULTIES=FACULTIES,
                 EXPERTISE_CHOICES=EXPERTISE_CHOICES,
                 POSITION_CHOICES=POSITION_CHOICES,
-                error=error,
             )
 
         if not profile:
             profile = MentorProfile(user_id=current_user.id)
 
-        #handle file upload
         file = request.files.get('pfp')
         if file and file.filename != '' and allowed_file(file.filename):
             ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = secure_filename(f"{current_user.id}.{ext}")  # e.g. 5.png
+            filename = secure_filename(f"{current_user.id}.{ext}")
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
@@ -625,9 +630,8 @@ def edit_mentor_profile():
         db.session.add(profile)
         db.session.commit()
 
-        return redirect(url_for('dashboard'))  
+        return redirect(url_for('dashboard'))
 
-    # GET: show form with existing values if profile exists
     return render_template(
         'edit_mentor.html',
         profile=profile,
@@ -635,6 +639,7 @@ def edit_mentor_profile():
         EXPERTISE_CHOICES=EXPERTISE_CHOICES,
         POSITION_CHOICES=POSITION_CHOICES,
     )
+
 
 def get_programme_full_name(code):
     for fac, programmes in PROGRAMME_LABELS.items():
