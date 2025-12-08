@@ -1,0 +1,116 @@
+.thread-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1.5rem;
+}
+
+.thread-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    background: #fff;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: 18px;
+
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    transition: 0.15s ease;
+}
+
+.thread-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.09);
+}
+
+.thread-pfp {
+    flex-shrink: 0;
+}
+
+.thread-pfp img,
+.pfp-fallback {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.pfp-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e7eb;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.thread-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.thread-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.thread-title a {
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.thread-title a:hover {
+    text-decoration: underline;
+}
+
+.thread-category {
+    background: #e7f2ff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: #3366cc;
+}
+
+.thread-meta {
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    gap: 0.25rem;
+}
+
+.meta-separator {
+    opacity: 0.5;
+}
+
+.thread-score {
+    flex-shrink: 0;
+    min-width: 2.5rem;
+
+    background: #f3f4ff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+
+    font-weight: 700;
+    text-align: center;
+}
+
+html.dark-mode .thread-score {
+    color: #3366cc;
+}
+
+.thread-card {
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.thread-card:hover {
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.thread-card a {
+    pointer-events: none; 
+}

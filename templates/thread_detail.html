@@ -3,80 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
-    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/thread.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
+
     <title>{{ thread.title }}</title>
 </head>
 <body>
-    <p><a href="{{ url_for('forum') }}">Back to Discussion Board</a></p>
+<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+    <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+</button>
 
-    <p>
-        <a href="{{ url_for('view_user', user_id=thread.creator.id) }}">
-            {{ thread.creator.username }}
-        </a>
-        · {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
-    </p>
-    <h1>{{ thread.title }}</h1>
-    
-    <p>{{ thread.body }}</p>
+<div class="thread-page">
+    <div class="thread-topbar">
+        <a href="{{ url_for('forum') }}" class="back-link">← Back to Discussion Board</a>
+    </div>
 
-    <p><strong>Score:</strong> {{ thread.score or 0 }}</p>
-    <p>
-        <a href="{{ url_for('upvote_thread', thread_id=thread.id) }}">⬆ Upvote</a> |
-        <a href="{{ url_for('downvote_thread', thread_id=thread.id) }}">⬇ Downvote</a>
-    </p>
-
-    <h2>Comments</h2>
-
-    {# ---------- NESTED COMMENTS MACRO ---------- #}
-    {% macro render_post(post, all_posts) %}
-        <li>
-            <small>
-                <a href="{{ url_for('view_user', user_id=post.author.id) }}">
-                    {{ post.author.username }}
-                </a>
-                · {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
-                · <a href="{{ url_for('reply_post', thread_id=thread.id, parent_id=post.id) }}">Reply</a>
-            </small>
-            <p>{{ post.content }}</p>
-
-            {# find replies to this comment #}
-            {% set children = all_posts | selectattr('parent_id', 'equalto', post.id) | list %}
-            {% if children %}
-                <ul>
-                    {% for child in children %}
-                        {{ render_post(child, all_posts) }}
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </li>
-    {% endmacro %}
-    {# ---------- END MACRO ---------- #}
-
-    {% if posts %}
-        <ul>
-            {# only render top-level comments here #}
-            {% for post in posts if not post.parent_id %}
-                {{ render_post(post, posts) }}
-            {% endfor %}
-        </ul>
+    {# --- author profile + display name --- #}
+    {% if thread.creator.role == 'student' and thread.creator.student_profile %}
+        {% set author_profile = thread.creator.student_profile %}
+        {% set author_name = author_profile.full_name %}
+    {% elif thread.creator.role == 'mentor' and thread.creator.mentor_profile %}
+        {% set author_profile = thread.creator.mentor_profile %}
+        {% set author_name = author_profile.full_name %}
     {% else %}
-        <p>No comments yet. Be the first to reply!</p>
+        {% set author_profile = None %}
+        {% set author_name = thread.creator.username %}
     {% endif %}
 
-    <h3>Add a comment</h3>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.content.label }}<br>
-            {{ form.content(rows=3, cols=60) }}
-            {% for error in form.content.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
-    </form>
+    <section class="thread-header">
+        <div class="thread-header-top">
+            <div class="thread-header-main">
+                <div class="thread-pfp">
+                    {% if author_profile and author_profile.pfp %}
+                        <img src="{{ url_for('static', filename='uploads/pfp/' ~ author_profile.pfp) }}"
+                            alt="{{ author_name }}">
+                    {% else %}
+                        <div class="pfp-fallback">
+                            {{ author_name[0]|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="thread-header-text">
+                    <div class="thread-meta-line">
+                        <a href="{{ url_for('view_user', user_id=thread.creator.id) }}" class="thread-author">
+                            {{ author_name }}
+                        </a>
+                        <span class="meta-separator">•</span>
+                        <span class="thread-date">
+                            {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </span>
+                    </div>
+
+                    <h1 class="thread-title-main">{{ thread.title }}</h1>
+                </div>
+            </div>
+
+            <div class="thread-score-box">
+                <div class="score-label">SCORE</div>
+                <div class="score-value">{{ thread.score or 0 }}</div>
+                <div class="score-actions">
+                    <a href="{{ url_for('upvote_thread', thread_id=thread.id) }}"
+                    class="vote-link vote-up {% if user_vote_value == 1 %}vote-active{% endif %}">
+                        {% if user_vote_value == 1 %}⬆ Upvoted{% else %}⬆ Upvote{% endif %}
+                    </a>
+                    <span class="meta-separator">|</span>
+                    <a href="{{ url_for('downvote_thread', thread_id=thread.id) }}"
+                    class="vote-link vote-down {% if user_vote_value == -1 %}vote-active{% endif %}">
+                        {% if user_vote_value == -1 %}⬇ Downvoted{% else %}⬇ Downvote{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="thread-body-inline">
+            {{ thread.body }}
+        </div>
+    </section>
+
+
+    <section class="thread-comments">
+        <h2>Comments</h2>
+
+        {# ---------- NESTED COMMENTS MACRO ---------- #}
+        {% macro render_post(post, all_posts, depth=0) %}
+            {% if post.author.role == 'student' and post.author.student_profile %}
+                {% set p_profile = post.author.student_profile %}
+                {% set p_name = p_profile.full_name %}
+            {% elif post.author.role == 'mentor' and post.author.mentor_profile %}
+                {% set p_profile = post.author.mentor_profile %}
+                {% set p_name = p_profile.full_name %}
+            {% else %}
+                {% set p_profile = None %}
+                {% set p_name = post.author.username %}
+            {% endif %}
+
+            <li class="comment-card" data-comment-id="{{ post.id }}" data-depth="{{ depth }}">
+                <div class="comment-main">
+                    <div class="comment-pfp">
+                        {% if p_profile and p_profile.pfp %}
+                            <img src="{{ url_for('static', filename='uploads/pfp/' ~ p_profile.pfp) }}"
+                                alt="{{ p_name }}">
+                        {% else %}
+                            <div class="pfp-fallback">{{ p_name[0]|upper }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="comment-content">
+                        <div class="comment-meta">
+                            <a href="{{ url_for('view_user', user_id=post.author.id) }}" class="comment-author">
+                                {{ p_name }}
+                            </a>
+                            <span class="meta-separator">•</span>
+                            <span class="comment-date">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+
+                            {# show Reply link only if depth < 2 (max 2 levels) #}
+                            {% if depth < 2 %}
+                                <span class="meta-separator">•</span>
+                                <a href="#comment-form"
+                                class="comment-reply-link"
+                                data-post-id="{{ post.id }}"
+                                data-author="{{ p_name }}"
+                                data-depth="{{ depth }}">
+                                    Reply
+                                </a>
+                            {% endif %}
+                        </div>
+
+                        <p class="comment-text">{{ post.content }}</p>
+                    </div>
+                </div>
+
+                {# children / replies #}
+                {% set children = all_posts | selectattr('parent_id', 'equalto', post.id) | list %}
+                {% if children %}
+                    <ul class="comment-children">
+                        {% for child in children %}
+                            {{ render_post(child, all_posts, depth + 1) }}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endmacro %}
+        {# ---------- END MACRO ---------- #}
+
+        {% if posts %}
+            <ul class="comment-list">
+                {% for post in posts if not post.parent_id %}
+                    {{ render_post(post, posts, 0) }}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-comments">No comments yet. Be the first to reply!</p>
+        {% endif %}
+    </section>
+
+    <section class="comment-form-section" id="comment-form">
+        <h3>Add a comment</h3>
+
+        <div id="replying-context" class="replying-context" style="display:none;">
+            Replying to <span id="replying-to-name"></span>
+            <button type="button" id="cancel-reply" class="link-button">Cancel</button>
+        </div>
+
+        <form method="POST" class="comment-form">
+            {{ form.hidden_tag() }}
+
+            <input type="hidden" name="parent_id" id="parent_id" value="">
+
+            <div class="form-group">
+                {{ form.content(rows=3, class_="comment-input", id="comment-input") }}
+                {% for error in form.content.errors %}
+                    <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Post Reply
+            </button>
+        </form>
+    </section>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const replyLinks = document.querySelectorAll('.comment-reply-link');
+    const parentIdInput = document.getElementById('parent_id');
+    const commentInput = document.getElementById('comment-input');
+    const ctxBox = document.getElementById('replying-context');
+    const ctxName = document.getElementById('replying-to-name');
+    const cancelBtn = document.getElementById('cancel-reply');
+
+    replyLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const postId = this.dataset.postId;
+            const author = this.dataset.author;
+
+            parentIdInput.value = postId;
+            ctxName.textContent = author;
+            ctxBox.style.display = 'block';
+
+            commentInput.focus();
+        });
+    });
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function () {
+            parentIdInput.value = "";
+            ctxBox.style.display = 'none';
+        });
+    }
+});
+</script>
 </body>
 </html>

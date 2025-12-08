@@ -239,6 +239,11 @@ html.dark-mode .panel {
 
 .flash-card {
     margin-bottom: 18px;
+    background-color: #e2fee3;
+    color: #0ba03f;
+    border: 1px solid #96e8a9e6;
+    padding: 10px 14px;
+    border-radius: 8px;
 }
 
 .theme-toggle {
