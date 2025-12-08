@@ -1,0 +1,250 @@
+.thread-page {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1.25rem 3rem;
+}
+
+/* Top bar */
+.thread-topbar {
+    margin-bottom: 1rem;
+}
+
+.thread-topbar .back-link {
+    text-decoration: none;
+}
+
+/* Header */
+.thread-header {
+    background: #ffffff;
+    padding: 1.3rem 1.6rem 1.4rem;
+    border-radius: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+.thread-header-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.7rem;
+}
+
+.thread-header-main {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+/* pfp */
+.thread-pfp,
+.comment-pfp {
+    flex-shrink: 0;
+}
+
+.thread-pfp img,
+.comment-pfp img,
+.pfp-fallback {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.pfp-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e7eb;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.thread-header-text {
+    min-width: 0;
+}
+
+.thread-meta-line {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 0.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.thread-author {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.thread-title-main {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+/* score box */
+.thread-score-box {
+    flex-shrink: 0;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.score-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #777;
+}
+
+.score-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: #f3f4ff;
+    border-radius: 999px;
+    padding: 0.25rem 0.8rem;
+}
+
+.score-actions {
+    font-size: 0.8rem;
+}
+
+.score-actions a {
+    text-decoration: none;
+}
+
+.meta-separator {
+    opacity: 0.6;
+}
+
+/* thread body */
+.thread-body-inline {
+    margin-top: 0.4rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+
+/* comments */
+.thread-comments h2 {
+    margin-bottom: 0.75rem;
+}
+
+.comment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem;
+}
+
+.comment-card {
+    margin-bottom: 0.75rem;
+}
+
+.comment-main {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: #ffffff;
+    padding: 0.75rem 0.9rem;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+}
+
+.comment-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-meta {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.comment-author {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.comment-reply-link {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.comment-text {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* nested replies */
+.comment-children {
+    list-style: none;
+    margin: 0.25rem 0 0.25rem 2.5rem;
+    padding-left: 0.75rem;
+    border-left: 2px solid rgba(0,0,0,0.06);
+}
+
+.no-comments {
+    font-size: 0.9rem;
+}
+
+/* comment form */
+.comment-form-section {
+    background: #ffffff;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+.comment-form {
+    margin-top: 0.5rem;
+}
+
+.comment-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.6rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 1px #4f46e5;
+}
+
+.form-error {
+    color: #b91c1c;
+    font-size: 0.8rem;
+}
+
+/* mobile */
+@media (max-width: 700px) {
+    .thread-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .thread-score-box {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .comment-children {
+        margin-left: 1.5rem;
+    }
+}

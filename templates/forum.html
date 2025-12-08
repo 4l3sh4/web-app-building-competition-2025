@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/projects.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forum.css') }}">
     <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Discussion Board</title>
@@ -60,28 +61,58 @@
     </form>
 
     {% if threads %}
-        <ul>
+        <ul class="thread-list">
             {% for thread in threads %}
-                <div style="background: white; margin: 10px; padding: 10px; border-radius: 25px;">
-                    <li>
-                        <strong>[{{ thread.score or 0 }}]</strong>
-                        <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
-                            {{ thread.title }}
-                        </a>
-                        {% if thread.category %}
-                            ({{ thread.category }})
+
+                {% if thread.creator.role == 'student' and thread.creator.student_profile %}
+                    {% set profile = thread.creator.student_profile %}
+                    {% set display_name = profile.full_name %}
+                {% elif thread.creator.role == 'mentor' and thread.creator.mentor_profile %}
+                    {% set profile = thread.creator.mentor_profile %}
+                    {% set display_name = profile.full_name %}
+                {% else %}
+                    {% set profile = None %}
+                    {% set display_name = thread.creator.username %}
+                {% endif %}
+
+                <li class="thread-card">
+
+                    <div class="thread-pfp">
+                        {% if profile and profile.pfp %}
+                            <img src="{{ url_for('static', filename='uploads/pfp/' ~ profile.pfp) }}"
+                                alt="{{ display_name }}">
+                        {% else %}
+                            <div class="pfp-fallback">{{ display_name[0]|upper }}</div>
                         {% endif %}
-                        <br>
-                        <small>
-                            Started by {{ thread.creator.username }}
-                            on {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}
-                        </small>
-                    </li>
-                </div>
+                    </div>
+
+                    <div class="thread-main">
+                        <div class="thread-title">
+                            <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
+                                {{ thread.title }}
+                            </a>
+                            {% if thread.category %}
+                                <span class="thread-category">{{ thread.category }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="thread-meta">
+                            <span>Started by {{ display_name }}</span>
+                            <span class="meta-separator">•</span>
+                            <span>{{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="thread-score">
+                        {{ thread.score or 0 }}
+                    </div>
+                </li>
             {% endfor %}
         </ul>
     {% else %}
         <p>No threads found.</p>
     {% endif %}
+
+
 </body>
 </html>
