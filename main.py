@@ -269,6 +269,18 @@ class Thread(db.Model):
     score = db.Column(db.Integer, default=0)  
     creator = db.relationship('User', backref='threads')
 
+class ThreadVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    thread_id = db.Column(db.Integer, db.ForeignKey('thread.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    value = db.Column(db.Integer, nullable=False)  # +1 = upvote, -1 = downvote
+
+    __table_args__ = (
+        db.UniqueConstraint('thread_id', 'user_id', name='uq_threadvote_thread_user'),
+    )
+
+    user = db.relationship('User', backref='thread_votes')
+    thread = db.relationship('Thread', backref='votes')
 
 class Post(db.Model):
     """Replies inside a thread"""
@@ -540,6 +552,8 @@ def edit_student_profile():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             profile.pfp = filename
+        elif not profile.pfp:
+            profile.pfp = "default_pfp.png"
 
         profile.full_name = full_name
         profile.faculty = faculty
@@ -579,7 +593,6 @@ def edit_mentor_profile():
         linkedin_profile = request.form.get('linkedin_profile') or None
         expertise_list = request.form.getlist('expertise')
 
-        # missing required fields
         if not (full_name and position and faculty and expertise_list):
             flash("Please fill in all required fields.", "error")
             return render_template(
@@ -590,11 +603,9 @@ def edit_mentor_profile():
                 POSITION_CHOICES=POSITION_CHOICES,
             )
 
-        # too many expertise selections
         if len(expertise_list) > 3:
             flash("You can select a maximum of 3 expertise areas.", "error")
 
-            # keep what they already selected 
             if not profile:
                 profile = MentorProfile(user_id=current_user.id)
             profile.full_name = full_name
@@ -602,7 +613,7 @@ def edit_mentor_profile():
             profile.faculty = faculty
             profile.office_location = office_location
             profile.linkedin_profile = linkedin_profile
-            profile.expertise = ";".join(expertise_list)  
+            profile.expertise = ";".join(expertise_list)
 
             return render_template(
                 'edit_mentor.html',
@@ -623,6 +634,8 @@ def edit_mentor_profile():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             profile.pfp = filename
+        elif not profile.pfp:
+            profile.pfp = "default_pfp.png"
 
         profile.full_name = full_name.strip()
         profile.position = position
@@ -643,7 +656,6 @@ def edit_mentor_profile():
         EXPERTISE_CHOICES=EXPERTISE_CHOICES,
         POSITION_CHOICES=POSITION_CHOICES,
     )
-
 
 def get_programme_full_name(code):
     for fac, programmes in PROGRAMME_LABELS.items():
@@ -1107,24 +1119,56 @@ def thread_detail(thread_id):
         return redirect(url_for('thread_detail', thread_id=thread.id))
 
     posts = Post.query.filter_by(thread_id=thread.id).order_by(Post.created_at.asc()).all()
-    return render_template('thread_detail.html', thread=thread, posts=posts, form=form)
+    user_vote_value = 0
+    vote = ThreadVote.query.filter_by(
+        thread_id=thread.id,
+        user_id=current_user.id
+    ).first()
+    if vote:
+        user_vote_value = vote.value
+    return render_template('thread_detail.html', thread=thread, posts=posts, form=form, user_vote_value=user_vote_value)
 
 @app.route('/forum/<int:thread_id>/upvote')
 @login_required
 def upvote_thread(thread_id):
-    thread = Thread.query.get_or_404(thread_id)
-    thread.score = (thread.score or 0) + 1
-    db.session.commit()
-    return redirect(url_for('thread_detail', thread_id=thread.id))
+    return _handle_thread_vote(thread_id, +1)
 
 
 @app.route('/forum/<int:thread_id>/downvote')
 @login_required
 def downvote_thread(thread_id):
+    return _handle_thread_vote(thread_id, -1)
+
+
+def _handle_thread_vote(thread_id, vote_value):
     thread = Thread.query.get_or_404(thread_id)
-    thread.score = (thread.score or 0) - 1
+
+    existing = ThreadVote.query.filter_by(
+        thread_id=thread.id,
+        user_id=current_user.id
+    ).first()
+
+    if not existing:
+        new_vote = ThreadVote(
+            thread_id=thread.id,
+            user_id=current_user.id,
+            value=vote_value
+        )
+        thread.score = (thread.score or 0) + vote_value
+        db.session.add(new_vote)
+
+    else:
+        if existing.value == vote_value:
+            thread.score = (thread.score or 0) - vote_value
+            db.session.delete(existing)
+        else:
+            diff = vote_value - existing.value   # +2 or -2
+            thread.score = (thread.score or 0) + diff
+            existing.value = vote_value
+
     db.session.commit()
     return redirect(url_for('thread_detail', thread_id=thread.id))
+
 
 # ---------------------
 # DIRECTORY

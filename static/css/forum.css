@@ -100,3 +100,17 @@
 html.dark-mode .thread-score {
     color: #3366cc;
 }
+
+.thread-card {
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.thread-card:hover {
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.thread-card a {
+    pointer-events: none; 
+}

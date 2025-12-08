@@ -76,7 +76,7 @@
                     {% set display_name = thread.creator.username %}
                 {% endif %}
 
-                <li class="thread-card">
+                <li class="thread-card" onclick="window.location='{{ url_for('thread_detail', thread_id=thread.id) }}'">
 
                     <!-- LEFT: PFP -->
                     <div class="thread-pfp">
@@ -91,9 +91,7 @@
                     <!-- MIDDLE: CONTENT -->
                     <div class="thread-main">
                         <div class="thread-title">
-                            <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
-                                {{ thread.title }}
-                            </a>
+                            {{ thread.title }}
                             {% if thread.category %}
                                 <span class="thread-category">{{ thread.category }}</span>
                             {% endif %}
@@ -116,6 +114,21 @@
         <p>No threads found.</p>
     {% endif %}
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".thread-card").forEach(card => {
+        card.addEventListener("click", function(e) {
+            // prevent card click when clicking inside an actual <a> tag
+            if (e.target.closest("a")) return;
+
+            const url = this.dataset.url;
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+});
+</script>
 
 </body>
 </html>

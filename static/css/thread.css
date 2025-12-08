@@ -248,3 +248,21 @@
         margin-left: 1.5rem;
     }
 }
+
+.score-actions .vote-link {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.score-actions .vote-link:hover {
+    text-decoration: underline;
+}
+
+/* active states */
+.vote-up.vote-active {
+    color: #16a34a; /* green */
+}
+
+.vote-down.vote-active {
+    color: #dc2626; /* red */
+}

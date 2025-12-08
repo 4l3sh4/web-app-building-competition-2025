@@ -67,9 +67,15 @@
                 <div class="score-label">SCORE</div>
                 <div class="score-value">{{ thread.score or 0 }}</div>
                 <div class="score-actions">
-                    <a href="{{ url_for('upvote_thread', thread_id=thread.id) }}">⬆ Upvote</a>
+                    <a href="{{ url_for('upvote_thread', thread_id=thread.id) }}"
+                    class="vote-link vote-up {% if user_vote_value == 1 %}vote-active{% endif %}">
+                        {% if user_vote_value == 1 %}⬆ Upvoted{% else %}⬆ Upvote{% endif %}
+                    </a>
                     <span class="meta-separator">|</span>
-                    <a href="{{ url_for('downvote_thread', thread_id=thread.id) }}">⬇ Downvote</a>
+                    <a href="{{ url_for('downvote_thread', thread_id=thread.id) }}"
+                    class="vote-link vote-down {% if user_vote_value == -1 %}vote-active{% endif %}">
+                        {% if user_vote_value == -1 %}⬇ Downvoted{% else %}⬇ Downvote{% endif %}
+                    </a>
                 </div>
             </div>
         </div>
