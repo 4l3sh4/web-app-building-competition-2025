@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Request Mentorship</title>
+
+    <!-- shared styles / same stack as profile -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile_view.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/request_mentorship.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+
+<div class="shell">
+
+    {# only show our "request sent" flash here #}
+    {% with messages = get_flashed_messages(category_filter=['request_sent']) %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="panel flash-card">
+                    <div class="muted">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {# HEADER CARD – same shape as profile header #}
+    <div class="panel header-card rm-header-card">
+        {% set profile = mentor.mentor_profile %}
+        
+        <!-- LEFT: pfp -->
+        <div class="pfp-wrap">
+            {% if profile and profile.pfp %}
+                <img src="{{ url_for('static', filename='uploads/pfp/' + profile.pfp) }}"
+                     alt="Profile picture" class="pfp">
+            {% else %}
+                <img src="{{ url_for('static', filename='uploads/pfp/default_pfp.png') }}"
+                     alt="Default profile picture" class="pfp">
+            {% endif %}
+        </div>
+
+        <!-- CENTER: mentor + page title -->
+        <div class="header-center">
+            <div class="name-row">
+                <h2 class="profile-name">
+                    {{ profile.full_name if profile and profile.full_name else mentor.username }}
+                </h2>
+
+                <span class="badge badge-mentor">MENTOR</span>
+            </div>
+
+            <div class="subtitle">
+                Requesting mentorship from this mentor.
+            </div>
+        </div>
+
+        <!-- RIGHT: back -->
+        <div class="header-actions">
+            <a href="{{ url_for('view_user', user_id=mentor.id) }}" class="back-link">← Back</a>
+        </div>
+    </div>
+
+    {# FORM PANEL #}
+    <div class="panel">
+        <div class="section-title">Request Details</div>
+
+        <form method="POST" enctype="multipart/form-data" class="rm-form">
+            {{ form.hidden_tag() }}
+
+            <div class="rm-field">
+                <label for="{{ form.title.id }}" class="rm-label">
+                    {{ form.title.label.text }}
+                </label>
+                {{ form.title(class="rm-input") }}
+                {% for error in form.title.errors %}
+                    <div class="rm-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="rm-field rm-field-half">
+                <label for="{{ form.mentorship_type.id }}" class="rm-label">
+                    {{ form.mentorship_type.label.text }}
+                </label>
+                {{ form.mentorship_type(class="rm-select") }}
+                {% for error in form.mentorship_type.errors %}
+                    <div class="rm-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="rm-field">
+                <label for="{{ form.description.id }}" class="rm-label">
+                    {{ form.description.label.text }}
+                </label>
+                {{ form.description(class="rm-textarea") }}
+                {% for error in form.description.errors %}
+                    <div class="rm-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="rm-field rm-field-half">
+                <label for="{{ form.document.id }}" class="rm-label">
+                    {{ form.document.label.text }} <span class="rm-optional">(optional)</span>
+                </label>
+                {{ form.document(class="rm-file") }}
+                {% for error in form.document.errors %}
+                    <div class="rm-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="rm-actions">
+                <button type="submit" class="btn-main">
+                    {{ form.submit.label.text }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
