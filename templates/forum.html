@@ -64,6 +64,7 @@
         <ul class="thread-list">
             {% for thread in threads %}
 
+                {# determine profile + name #}
                 {% if thread.creator.role == 'student' and thread.creator.student_profile %}
                     {% set profile = thread.creator.student_profile %}
                     {% set display_name = profile.full_name %}
@@ -77,6 +78,7 @@
 
                 <li class="thread-card">
 
+                    <!-- LEFT: PFP -->
                     <div class="thread-pfp">
                         {% if profile and profile.pfp %}
                             <img src="{{ url_for('static', filename='uploads/pfp/' ~ profile.pfp) }}"
@@ -86,6 +88,7 @@
                         {% endif %}
                     </div>
 
+                    <!-- MIDDLE: CONTENT -->
                     <div class="thread-main">
                         <div class="thread-title">
                             <a href="{{ url_for('thread_detail', thread_id=thread.id) }}">
@@ -102,7 +105,7 @@
                             <span>{{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
                         </div>
                     </div>
-
+                    <!-- RIGHT: SCORE -->
                     <div class="thread-score">
                         {{ thread.score or 0 }}
                     </div>

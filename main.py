@@ -147,11 +147,15 @@ EXPERTISE_CHOICES = [
 ]
 
 POSITION_CHOICES = [
+    "Foundation Lecturer",
     "Lecturer",
+    "Part-time Lecturer",
     "Senior Lecturer",
     "Assistant Professor",
     "Associate Professor",
     "Specialist 2",
+    "Deputy Dean",
+    "Dean",
 ]
 
 MENTORSHIP_TYPE_CHOICES = [
