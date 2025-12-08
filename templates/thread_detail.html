@@ -84,7 +84,7 @@
         <h2>Comments</h2>
 
         {# ---------- NESTED COMMENTS MACRO ---------- #}
-        {% macro render_post(post, all_posts) %}
+        {% macro render_post(post, all_posts, depth=0) %}
             {% if post.author.role == 'student' and post.author.student_profile %}
                 {% set p_profile = post.author.student_profile %}
                 {% set p_name = p_profile.full_name %}
@@ -96,12 +96,12 @@
                 {% set p_name = post.author.username %}
             {% endif %}
 
-            <li class="comment-card">
+            <li class="comment-card" data-comment-id="{{ post.id }}" data-depth="{{ depth }}">
                 <div class="comment-main">
                     <div class="comment-pfp">
                         {% if p_profile and p_profile.pfp %}
                             <img src="{{ url_for('static', filename='uploads/pfp/' ~ p_profile.pfp) }}"
-                                 alt="{{ p_name }}">
+                                alt="{{ p_name }}">
                         {% else %}
                             <div class="pfp-fallback">{{ p_name[0]|upper }}</div>
                         {% endif %}
@@ -114,9 +114,18 @@
                             </a>
                             <span class="meta-separator">•</span>
                             <span class="comment-date">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
-                            <span class="meta-separator">•</span>
-                            <a href="{{ url_for('reply_post', thread_id=thread.id, parent_id=post.id) }}"
-                               class="comment-reply-link">Reply</a>
+
+                            {# show Reply link only if depth < 2 (max 2 levels) #}
+                            {% if depth < 2 %}
+                                <span class="meta-separator">•</span>
+                                <a href="#comment-form"
+                                class="comment-reply-link"
+                                data-post-id="{{ post.id }}"
+                                data-author="{{ p_name }}"
+                                data-depth="{{ depth }}">
+                                    Reply
+                                </a>
+                            {% endif %}
                         </div>
 
                         <p class="comment-text">{{ post.content }}</p>
@@ -128,7 +137,7 @@
                 {% if children %}
                     <ul class="comment-children">
                         {% for child in children %}
-                            {{ render_post(child, all_posts) }}
+                            {{ render_post(child, all_posts, depth + 1) }}
                         {% endfor %}
                     </ul>
                 {% endif %}
@@ -139,7 +148,7 @@
         {% if posts %}
             <ul class="comment-list">
                 {% for post in posts if not post.parent_id %}
-                    {{ render_post(post, posts) }}
+                    {{ render_post(post, posts, 0) }}
                 {% endfor %}
             </ul>
         {% else %}
@@ -147,12 +156,21 @@
         {% endif %}
     </section>
 
-    <section class="comment-form-section">
+    <section class="comment-form-section" id="comment-form">
         <h3>Add a comment</h3>
+
+        <div id="replying-context" class="replying-context" style="display:none;">
+            Replying to <span id="replying-to-name"></span>
+            <button type="button" id="cancel-reply" class="link-button">Cancel</button>
+        </div>
+
         <form method="POST" class="comment-form">
             {{ form.hidden_tag() }}
+
+            <input type="hidden" name="parent_id" id="parent_id" value="">
+
             <div class="form-group">
-                {{ form.content(rows=3, class_="comment-input") }}
+                {{ form.content(rows=3, class_="comment-input", id="comment-input") }}
                 {% for error in form.content.errors %}
                     <span class="form-error">{{ error }}</span>
                 {% endfor %}
@@ -163,5 +181,37 @@
         </form>
     </section>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const replyLinks = document.querySelectorAll('.comment-reply-link');
+    const parentIdInput = document.getElementById('parent_id');
+    const commentInput = document.getElementById('comment-input');
+    const ctxBox = document.getElementById('replying-context');
+    const ctxName = document.getElementById('replying-to-name');
+    const cancelBtn = document.getElementById('cancel-reply');
+
+    replyLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const postId = this.dataset.postId;
+            const author = this.dataset.author;
+
+            parentIdInput.value = postId;
+            ctxName.textContent = author;
+            ctxBox.style.display = 'block';
+
+            commentInput.focus();
+        });
+    });
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function () {
+            parentIdInput.value = "";
+            ctxBox.style.display = 'none';
+        });
+    }
+});
+</script>
 </body>
 </html>

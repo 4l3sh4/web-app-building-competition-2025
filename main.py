@@ -1071,13 +1071,36 @@ def thread_detail(thread_id):
     thread = Thread.query.get_or_404(thread_id)
     form = PostForm()
 
-    # this form is for **top-level** comments (not replies)
     if form.validate_on_submit():
+        parent_id_raw = request.form.get('parent_id')
+        parent_post = None
+
+        if parent_id_raw:
+            try:
+                parent_id = int(parent_id_raw)
+                parent_post = Post.query.get(parent_id)
+            except (ValueError, TypeError):
+                parent_post = None
+
+            if not parent_post or parent_post.thread_id != thread.id:
+                parent_post = None
+
+            if parent_post:
+                depth = 0
+                temp = parent_post
+                while temp is not None:
+                    depth += 1
+                    temp = temp.parent
+
+                if depth >=3:
+                    flash("Replies are limited to 2 levels deep.", "error")
+                    return redirect(url_for('thread_detail', thread_id=thread.id))
+
         post = Post(
             content=form.content.data,
             thread_id=thread.id,
             author_id=current_user.id,
-            parent_id=None   # top-level
+            parent_id=parent_post.id if parent_post else None
         )
         db.session.add(post)
         db.session.commit()
@@ -1085,33 +1108,6 @@ def thread_detail(thread_id):
 
     posts = Post.query.filter_by(thread_id=thread.id).order_by(Post.created_at.asc()).all()
     return render_template('thread_detail.html', thread=thread, posts=posts, form=form)
-
-
-@app.route('/forum/<int:thread_id>/reply/<int:parent_id>', methods=['GET', 'POST'])
-@login_required
-def reply_post(thread_id, parent_id):
-    thread = Thread.query.get_or_404(thread_id)
-    parent_post = Post.query.get_or_404(parent_id)
-
-    # make sure the parent post belongs to this thread
-    if parent_post.thread_id != thread.id:
-        return redirect(url_for('thread_detail', thread_id=thread.id))
-
-    form = PostForm()
-    if form.validate_on_submit():
-        reply = Post(
-            content=form.content.data,
-            thread_id=thread.id,
-            author_id=current_user.id,
-            parent_id=parent_post.id  # 🆕 link to parent
-        )
-        db.session.add(reply)
-        db.session.commit()
-        return redirect(url_for('thread_detail', thread_id=thread.id))
-
-    # we’ll show a small reply page with parent comment context
-    return render_template('reply_post.html', thread=thread, parent_post=parent_post, form=form)
-
 
 @app.route('/forum/<int:thread_id>/upvote')
 @login_required
