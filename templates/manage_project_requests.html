@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/project-requests.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
+    <title>Join Requests - {{ project.title }}</title>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
+
+    <div class="container">
+        <div class="card requests-card">
+            <div class="page-header">
+                <a class="back-link" href="{{ url_for('project_detail', project_id=project.id) }}">
+                    ← Back to Project
+                </a>
+                <h1>Join Requests: {{ project.title }}</h1>
+            </div>
+            
+            {% if pending_requests %}
+                <div class="requests-list">
+                    <h3>Pending Requests ({{ pending_requests|length }})</h3>
+                    
+                    {% for req in pending_requests %}
+                        <div class="request-card">
+                            <div class="request-header">
+                                <strong>
+                                    <a href="{{ url_for('view_user', user_id=req.user.id) }}">
+                                        {{ req.user.username }}
+                                    </a>
+                                </strong>
+                                <small>Requested {{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            
+                            <form method="POST" action="{{ url_for('handle_join_request', project_id=project.id, request_id=req.id) }}">
+                                <div class="request-actions">
+                                    <button type="submit" name="action" value="accept" class="btn btn-success">
+                                        ✓ Accept Request
+                                    </button>
+                                    <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                        ✗ Reject Request
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-requests">
+                    <p>No pending join requests.</p>
+                    <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-ghost">
+                        Return to Project
+                    </a>
+                </div>
+            {% endif %}
+            
+            <!-- Current Members Section -->
+            <div class="current-members" style="margin-top: 40px;">
+                <h3>Current Members ({{ project.members|length }})</h3>
+                <ul>
+                    {% for member in project.members %}
+                        <li>
+                            <a href="{{ url_for('view_user', user_id=member.user.id) }}">
+                                {{ member.user.username }}
+                            </a>
+                            {% if member.user.id == project.owner_id %}
+                                <span class="status-badge status-accepted">Owner</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

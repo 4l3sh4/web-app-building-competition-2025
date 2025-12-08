@@ -211,6 +211,7 @@ class MentorshipRequest(db.Model):
     student = db.relationship('User', foreign_keys=[student_id], backref='sent_mentorship_requests')
     mentor = db.relationship('User', foreign_keys=[mentor_id], backref='received_mentorship_requests')
 
+
 class Project(db.Model):
     """Project & Opportunities Board entries"""
     id = db.Column(db.Integer, primary_key=True)
@@ -221,6 +222,18 @@ class Project(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     owner = db.relationship('User', backref='projects')
+
+
+class ProjectJoinRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.String(20), default="pending")  # Pending/Accepted/Rejected
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    responded_at = db.Column(db.DateTime)
+
+    user = db.relationship("User", backref="project_join_requests")
+    project = db.relationship("Project", backref="join_requests")
 
 
 class ProjectMember(db.Model):
@@ -837,56 +850,151 @@ def create_project():
             owner_id=current_user.id
         )
         db.session.add(project)
+        db.session.flush()  # Get the project ID
+        
+        owner_membership = ProjectMember(
+            project_id=project.id,
+            user_id=current_user.id
+        )
+        db.session.add(owner_membership)
+        
         db.session.commit()
         return redirect(url_for('project_list'))
 
     return render_template('project_create.html', form=form)
 
 
-@app.route('/projects/<int:project_id>')
+@app.route("/projects/<int:project_id>")
 @login_required
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
 
-    membership = ProjectMember.query.filter_by(
-        project_id=project.id,
-        user_id=current_user.id
-    ).first()
+    is_member = any(m.user_id == current_user.id for m in project.members)
+    members = project.members
+    member_count = len(members)
 
-    member_count = ProjectMember.query.filter_by(project_id=project.id).count()
-    members = ProjectMember.query.filter_by(project_id=project.id).all()
+    join_request = (
+        ProjectJoinRequest.query
+        .filter_by(project_id=project.id, user_id=current_user.id)
+        .order_by(ProjectJoinRequest.created_at.desc())
+        .first()
+    )
+
+    join_status = join_request.status if join_request else None
 
     return render_template(
-        'project_detail.html',
+        "project_detail.html",
         project=project,
-        is_member=bool(membership),
+        is_member=is_member,
+        members=members,
         member_count=member_count,
-        members=members
+        join_status=join_status,   # 👈 pass to template
     )
 
 
-@app.route('/projects/<int:project_id>/join')
+@app.route('/projects/<int:project_id>/request_join')
 @login_required
-def join_project(project_id):
+def request_join_project(project_id):
     project = Project.query.get_or_404(project_id)
 
-    existing = ProjectMember.query.filter_by(
+    if project.owner_id == current_user.id:
+        flash("You are the owner of this project. Owners cannot request to join their own project.", "info")
+        return redirect(url_for('project_detail', project_id=project.id))
+    
+    # Check if already a member
+    existing_member = ProjectMember.query.filter_by(
         project_id=project.id,
         user_id=current_user.id
     ).first()
+    
+    if existing_member:
+        flash("You are already a member of this project.", "info")
+        return redirect(url_for('project_detail', project_id=project.id))
+    
+    # Check if already has pending request
+    existing_request = ProjectJoinRequest.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        flash("You already have a pending request to join this project.", "info")
+        return redirect(url_for('project_detail', project_id=project.id))
+    
+    join_request = ProjectJoinRequest(
+        project_id=project.id,
+        user_id=current_user.id,
+        status='pending'
+    )
+    
+    db.session.add(join_request)
+    db.session.commit()
+    
+    flash("Your request to join has been sent to the project owner.", "success")
+    return redirect(url_for('project_detail', project_id=project.id))
 
-    if not existing:
-        membership = ProjectMember(project_id=project.id, user_id=current_user.id)
-        db.session.add(membership)
-        db.session.commit()
+@app.route('/projects/<int:project_id>/manage_requests')
+@login_required
+def manage_project_requests(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Only project owner can manage requests
+    if project.owner_id != current_user.id:
+        abort(403)
+    
+    pending_requests = ProjectJoinRequest.query.filter_by(
+        project_id=project.id,
+        status='pending'
+    ).all()
+    
+    return render_template('manage_project_requests.html', 
+                         project=project, 
+                         pending_requests=pending_requests)
 
-    # after joining, go straight to chat
-    return redirect(url_for('project_chat', project_id=project.id))
+
+@app.route("/projects/<int:project_id>/requests/<int:request_id>", methods=["POST"])
+@login_required
+def handle_join_request(project_id, request_id):
+    req = ProjectJoinRequest.query.get_or_404(request_id)
+
+    if req.project.owner_id != current_user.id:
+        abort(403)
+
+    action = request.form.get("action")
+
+    if action == "accept":
+        # add as member
+        member = ProjectMember(project_id=project_id, user_id=req.user_id)
+        db.session.add(member)
+
+        # keep the request record, mark as accepted
+        req.status = "accepted"
+        req.responded_at = datetime.utcnow()
+
+        flash("Join request accepted.", "success")
+
+    elif action == "reject":
+        # DON'T delete – just mark as rejected
+        req.status = "rejected"
+        req.responded_at = datetime.utcnow()
+
+        flash("Join request rejected.", "info")
+
+    db.session.commit()
+    return redirect(url_for("manage_project_requests", project_id=project_id))
 
 
 @app.route('/projects/<int:project_id>/leave')
 @login_required
 def leave_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Prevent project owner from leaving
+    if project.owner_id == current_user.id:
+        flash("Project owners cannot leave their own project.", "error")
+        return redirect(url_for('project_detail', project_id=project_id))
+    
     membership = ProjectMember.query.filter_by(
         project_id=project_id,
         user_id=current_user.id
@@ -895,6 +1003,7 @@ def leave_project(project_id):
     if membership:
         db.session.delete(membership)
         db.session.commit()
+        flash("You have left the project.", "success")
 
     return redirect(url_for('project_detail', project_id=project_id))
 
