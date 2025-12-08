@@ -24,7 +24,7 @@
                 </p>
             </div>
 
-            <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="pill-text pill-text-blue">← Back to Dashboard</a>
         </div>
     </div>
 
@@ -54,10 +54,9 @@
                        value="{{ current_user.email }}" disabled>
             </div>
 
-            <div class="form-group">
-                <label for="pfp">Profile Picture</label>
-                <input type="file" name="pfp" id="pfp"
-                       accept="image/*" form="mentor-edit-form">
+            <div class="form-group pfp-form">
+                <label for="pfp">Upload profile picture</label>
+                <input type="file" name="pfp" id="pfp" accept="image/*" form="mentor-edit-form">
             </div>
         </div>
 
