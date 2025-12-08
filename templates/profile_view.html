@@ -140,7 +140,7 @@
 
                 <!-- STUDENT: THREADS -->
                 <div class="panel">
-                    <div class="section-title">Forum Threads</div>
+                    <div class="section-title">Discussion Threads</div>
 
                     {% if student_threads and student_threads|length > 0 %}
                         <ul class="item-list">
@@ -192,6 +192,12 @@
                 <!-- MENTOR: CONTACT -->
                 <div class="panel">
                     <div class="section-title">Contact & Links</div>
+                        <div class ="body-text">
+                            <div class="meta-row">
+                                <span class="label">Email:</span>
+                                <span>{{ user.email }}</span>
+                            </div>
+                        </div>
                     {% if (profile and profile.office_location) or (profile and profile.linkedin_profile) %}
                         {% if profile.office_location %}
                             <div class="body-text">

@@ -147,11 +147,15 @@ EXPERTISE_CHOICES = [
 ]
 
 POSITION_CHOICES = [
+    "Foundation Lecturer",
     "Lecturer",
+    "Part-time Lecturer",
     "Senior Lecturer",
     "Assistant Professor",
     "Associate Professor",
     "Specialist 2",
+    "Deputy Dean",
+    "Dean",
 ]
 
 MENTORSHIP_TYPE_CHOICES = [
@@ -211,6 +215,7 @@ class MentorshipRequest(db.Model):
     student = db.relationship('User', foreign_keys=[student_id], backref='sent_mentorship_requests')
     mentor = db.relationship('User', foreign_keys=[mentor_id], backref='received_mentorship_requests')
 
+
 class Project(db.Model):
     """Project & Opportunities Board entries"""
     id = db.Column(db.Integer, primary_key=True)
@@ -221,6 +226,18 @@ class Project(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     owner = db.relationship('User', backref='projects')
+
+
+class ProjectJoinRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.String(20), default="pending")  # Pending/Accepted/Rejected
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    responded_at = db.Column(db.DateTime)
+
+    user = db.relationship("User", backref="project_join_requests")
+    project = db.relationship("Project", backref="join_requests")
 
 
 class ProjectMember(db.Model):
@@ -265,6 +282,18 @@ class Thread(db.Model):
     score = db.Column(db.Integer, default=0)  
     creator = db.relationship('User', backref='threads')
 
+class ThreadVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    thread_id = db.Column(db.Integer, db.ForeignKey('thread.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    value = db.Column(db.Integer, nullable=False)  # +1 = upvote, -1 = downvote
+
+    __table_args__ = (
+        db.UniqueConstraint('thread_id', 'user_id', name='uq_threadvote_thread_user'),
+    )
+
+    user = db.relationship('User', backref='thread_votes')
+    thread = db.relationship('Thread', backref='votes')
 
 class Post(db.Model):
     """Replies inside a thread"""
@@ -536,6 +565,8 @@ def edit_student_profile():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             profile.pfp = filename
+        elif not profile.pfp:
+            profile.pfp = "default_pfp.png"
 
         profile.full_name = full_name
         profile.faculty = faculty
@@ -573,47 +604,51 @@ def edit_mentor_profile():
         faculty = request.form.get('faculty')
         office_location = request.form.get('office_location') or None
         linkedin_profile = request.form.get('linkedin_profile') or None
-
         expertise_list = request.form.getlist('expertise')
 
         if not (full_name and position and faculty and expertise_list):
-            error = "Please fill in all required fields."
+            flash("Please fill in all required fields.", "error")
             return render_template(
                 'edit_mentor.html',
                 profile=profile,
                 FACULTIES=FACULTIES,
                 EXPERTISE_CHOICES=EXPERTISE_CHOICES,
                 POSITION_CHOICES=POSITION_CHOICES,
-                error=error,
             )
-        
+
         if len(expertise_list) > 3:
-            error = "You can select a maximum of 3 expertise areas."
-            # keep what they already selected
+            flash("You can select a maximum of 3 expertise areas.", "error")
+
             if not profile:
                 profile = MentorProfile(user_id=current_user.id)
-            profile.expertise = ",".join(expertise_list)
+            profile.full_name = full_name
+            profile.position = position
+            profile.faculty = faculty
+            profile.office_location = office_location
+            profile.linkedin_profile = linkedin_profile
+            profile.expertise = ";".join(expertise_list)
+
             return render_template(
                 'edit_mentor.html',
                 profile=profile,
                 FACULTIES=FACULTIES,
                 EXPERTISE_CHOICES=EXPERTISE_CHOICES,
                 POSITION_CHOICES=POSITION_CHOICES,
-                error=error,
             )
 
         if not profile:
             profile = MentorProfile(user_id=current_user.id)
 
-        #handle file upload
         file = request.files.get('pfp')
         if file and file.filename != '' and allowed_file(file.filename):
             ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = secure_filename(f"{current_user.id}.{ext}")  # e.g. 5.png
+            filename = secure_filename(f"{current_user.id}.{ext}")
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             profile.pfp = filename
+        elif not profile.pfp:
+            profile.pfp = "default_pfp.png"
 
         profile.full_name = full_name.strip()
         profile.position = position
@@ -625,9 +660,8 @@ def edit_mentor_profile():
         db.session.add(profile)
         db.session.commit()
 
-        return redirect(url_for('dashboard'))  
+        return redirect(url_for('dashboard'))
 
-    # GET: show form with existing values if profile exists
     return render_template(
         'edit_mentor.html',
         profile=profile,
@@ -837,56 +871,151 @@ def create_project():
             owner_id=current_user.id
         )
         db.session.add(project)
+        db.session.flush()  # Get the project ID
+        
+        owner_membership = ProjectMember(
+            project_id=project.id,
+            user_id=current_user.id
+        )
+        db.session.add(owner_membership)
+        
         db.session.commit()
         return redirect(url_for('project_list'))
 
     return render_template('project_create.html', form=form)
 
 
-@app.route('/projects/<int:project_id>')
+@app.route("/projects/<int:project_id>")
 @login_required
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
 
-    membership = ProjectMember.query.filter_by(
-        project_id=project.id,
-        user_id=current_user.id
-    ).first()
+    is_member = any(m.user_id == current_user.id for m in project.members)
+    members = project.members
+    member_count = len(members)
 
-    member_count = ProjectMember.query.filter_by(project_id=project.id).count()
-    members = ProjectMember.query.filter_by(project_id=project.id).all()
+    join_request = (
+        ProjectJoinRequest.query
+        .filter_by(project_id=project.id, user_id=current_user.id)
+        .order_by(ProjectJoinRequest.created_at.desc())
+        .first()
+    )
+
+    join_status = join_request.status if join_request else None
 
     return render_template(
-        'project_detail.html',
+        "project_detail.html",
         project=project,
-        is_member=bool(membership),
+        is_member=is_member,
+        members=members,
         member_count=member_count,
-        members=members
+        join_status=join_status,   # 👈 pass to template
     )
 
 
-@app.route('/projects/<int:project_id>/join')
+@app.route('/projects/<int:project_id>/request_join')
 @login_required
-def join_project(project_id):
+def request_join_project(project_id):
     project = Project.query.get_or_404(project_id)
 
-    existing = ProjectMember.query.filter_by(
+    if project.owner_id == current_user.id:
+        flash("You are the owner of this project. Owners cannot request to join their own project.", "info")
+        return redirect(url_for('project_detail', project_id=project.id))
+    
+    # Check if already a member
+    existing_member = ProjectMember.query.filter_by(
         project_id=project.id,
         user_id=current_user.id
     ).first()
+    
+    if existing_member:
+        flash("You are already a member of this project.", "info")
+        return redirect(url_for('project_detail', project_id=project.id))
+    
+    # Check if already has pending request
+    existing_request = ProjectJoinRequest.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        flash("You already have a pending request to join this project.", "info")
+        return redirect(url_for('project_detail', project_id=project.id))
+    
+    join_request = ProjectJoinRequest(
+        project_id=project.id,
+        user_id=current_user.id,
+        status='pending'
+    )
+    
+    db.session.add(join_request)
+    db.session.commit()
+    
+    flash("Your request to join has been sent to the project owner.", "success")
+    return redirect(url_for('project_detail', project_id=project.id))
 
-    if not existing:
-        membership = ProjectMember(project_id=project.id, user_id=current_user.id)
-        db.session.add(membership)
-        db.session.commit()
+@app.route('/projects/<int:project_id>/manage_requests')
+@login_required
+def manage_project_requests(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Only project owner can manage requests
+    if project.owner_id != current_user.id:
+        abort(403)
+    
+    pending_requests = ProjectJoinRequest.query.filter_by(
+        project_id=project.id,
+        status='pending'
+    ).all()
+    
+    return render_template('manage_project_requests.html', 
+                         project=project, 
+                         pending_requests=pending_requests)
 
-    # after joining, go straight to chat
-    return redirect(url_for('project_chat', project_id=project.id))
+
+@app.route("/projects/<int:project_id>/requests/<int:request_id>", methods=["POST"])
+@login_required
+def handle_join_request(project_id, request_id):
+    req = ProjectJoinRequest.query.get_or_404(request_id)
+
+    if req.project.owner_id != current_user.id:
+        abort(403)
+
+    action = request.form.get("action")
+
+    if action == "accept":
+        # add as member
+        member = ProjectMember(project_id=project_id, user_id=req.user_id)
+        db.session.add(member)
+
+        # keep the request record, mark as accepted
+        req.status = "accepted"
+        req.responded_at = datetime.utcnow()
+
+        flash("Join request accepted.", "success")
+
+    elif action == "reject":
+        # DON'T delete – just mark as rejected
+        req.status = "rejected"
+        req.responded_at = datetime.utcnow()
+
+        flash("Join request rejected.", "info")
+
+    db.session.commit()
+    return redirect(url_for("manage_project_requests", project_id=project_id))
 
 
 @app.route('/projects/<int:project_id>/leave')
 @login_required
 def leave_project(project_id):
+    project = Project.query.get_or_404(project_id)
+    
+    # Prevent project owner from leaving
+    if project.owner_id == current_user.id:
+        flash("Project owners cannot leave their own project.", "error")
+        return redirect(url_for('project_detail', project_id=project_id))
+    
     membership = ProjectMember.query.filter_by(
         project_id=project_id,
         user_id=current_user.id
@@ -895,6 +1024,7 @@ def leave_project(project_id):
     if membership:
         db.session.delete(membership)
         db.session.commit()
+        flash("You have left the project.", "success")
 
     return redirect(url_for('project_detail', project_id=project_id))
 
@@ -1062,64 +1192,92 @@ def thread_detail(thread_id):
     thread = Thread.query.get_or_404(thread_id)
     form = PostForm()
 
-    # this form is for **top-level** comments (not replies)
     if form.validate_on_submit():
+        parent_id_raw = request.form.get('parent_id')
+        parent_post = None
+
+        if parent_id_raw:
+            try:
+                parent_id = int(parent_id_raw)
+                parent_post = Post.query.get(parent_id)
+            except (ValueError, TypeError):
+                parent_post = None
+
+            if not parent_post or parent_post.thread_id != thread.id:
+                parent_post = None
+
+            if parent_post:
+                depth = 0
+                temp = parent_post
+                while temp is not None:
+                    depth += 1
+                    temp = temp.parent
+
+                if depth >=3:
+                    flash("Replies are limited to 2 levels deep.", "error")
+                    return redirect(url_for('thread_detail', thread_id=thread.id))
+
         post = Post(
             content=form.content.data,
             thread_id=thread.id,
             author_id=current_user.id,
-            parent_id=None   # top-level
+            parent_id=parent_post.id if parent_post else None
         )
         db.session.add(post)
         db.session.commit()
         return redirect(url_for('thread_detail', thread_id=thread.id))
 
     posts = Post.query.filter_by(thread_id=thread.id).order_by(Post.created_at.asc()).all()
-    return render_template('thread_detail.html', thread=thread, posts=posts, form=form)
-
-
-@app.route('/forum/<int:thread_id>/reply/<int:parent_id>', methods=['GET', 'POST'])
-@login_required
-def reply_post(thread_id, parent_id):
-    thread = Thread.query.get_or_404(thread_id)
-    parent_post = Post.query.get_or_404(parent_id)
-
-    # make sure the parent post belongs to this thread
-    if parent_post.thread_id != thread.id:
-        return redirect(url_for('thread_detail', thread_id=thread.id))
-
-    form = PostForm()
-    if form.validate_on_submit():
-        reply = Post(
-            content=form.content.data,
-            thread_id=thread.id,
-            author_id=current_user.id,
-            parent_id=parent_post.id  # 🆕 link to parent
-        )
-        db.session.add(reply)
-        db.session.commit()
-        return redirect(url_for('thread_detail', thread_id=thread.id))
-
-    # we’ll show a small reply page with parent comment context
-    return render_template('reply_post.html', thread=thread, parent_post=parent_post, form=form)
-
+    user_vote_value = 0
+    vote = ThreadVote.query.filter_by(
+        thread_id=thread.id,
+        user_id=current_user.id
+    ).first()
+    if vote:
+        user_vote_value = vote.value
+    return render_template('thread_detail.html', thread=thread, posts=posts, form=form, user_vote_value=user_vote_value)
 
 @app.route('/forum/<int:thread_id>/upvote')
 @login_required
 def upvote_thread(thread_id):
-    thread = Thread.query.get_or_404(thread_id)
-    thread.score = (thread.score or 0) + 1
-    db.session.commit()
-    return redirect(url_for('thread_detail', thread_id=thread.id))
+    return _handle_thread_vote(thread_id, +1)
 
 
 @app.route('/forum/<int:thread_id>/downvote')
 @login_required
 def downvote_thread(thread_id):
+    return _handle_thread_vote(thread_id, -1)
+
+
+def _handle_thread_vote(thread_id, vote_value):
     thread = Thread.query.get_or_404(thread_id)
-    thread.score = (thread.score or 0) - 1
+
+    existing = ThreadVote.query.filter_by(
+        thread_id=thread.id,
+        user_id=current_user.id
+    ).first()
+
+    if not existing:
+        new_vote = ThreadVote(
+            thread_id=thread.id,
+            user_id=current_user.id,
+            value=vote_value
+        )
+        thread.score = (thread.score or 0) + vote_value
+        db.session.add(new_vote)
+
+    else:
+        if existing.value == vote_value:
+            thread.score = (thread.score or 0) - vote_value
+            db.session.delete(existing)
+        else:
+            diff = vote_value - existing.value   # +2 or -2
+            thread.score = (thread.score or 0) + diff
+            existing.value = vote_value
+
     db.session.commit()
     return redirect(url_for('thread_detail', thread_id=thread.id))
+
 
 # ---------------------
 # DIRECTORY

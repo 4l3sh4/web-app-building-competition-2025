@@ -1,0 +1,295 @@
+/* Project Chat Page Styles */
+:root {
+    --card-bg: #ffffff;
+    --border: rgba(230, 238, 252, 0.95);
+    --accent-1: #0954a0;
+    --accent-2: #5fafff;
+    --text-primary: #2d3748;
+    --muted: #718096;
+}
+
+html.dark-mode {
+    --card-bg: #1a202c;
+    --border: rgba(255, 255, 255, 0.06);
+    --accent-1: #5fafff;
+    --accent-2: #90cdf4;
+    --text-primary: #f7fafc;
+    --muted: #a0aec0;
+}
+
+/* page layout */
+body {
+    color: var(--text-primary);
+    padding: 32px 16px;
+}
+
+.chat-page-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* header */
+.chat-header {
+    margin-bottom: 20px;
+}
+
+.chat-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* back link */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-1);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+html.dark-mode .back-link {
+    color: var(--accent-2);
+}
+
+/* main card */
+.chat-card {
+    position: relative;              
+    z-index: 1;                      
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(2, 6, 23, 0.08);
+    padding: 20px 24px 24px;
+
+    background-color: var(--card-bg); 
+    overflow: hidden;                
+}
+
+/* solid inner layer */
+.chat-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: var(--card-bg);
+    z-index: -1;                      
+}
+
+
+/* section titles inside card */
+.chat-card h2 {
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+.chat-card h3 {
+    font-size: 16px;
+    margin-top: 20px;
+    margin-bottom: 6px;
+}
+
+/* messages list */
+.messages-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0 0;
+}
+
+.message-item {
+    padding: 10px 14px 8px;
+    border-radius: 12px;
+    background: rgba(9, 84, 160, 0.02);
+    margin-bottom: 8px;
+}
+
+html.dark-mode .message-item {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.message-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.message-header a {
+    color: var(--accent-1);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.message-header a:hover {
+    text-decoration: underline;
+}
+
+.message-meta {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.message-actions a {
+    font-size: 12px;
+    color: var(--accent-1);
+    text-decoration: none;
+}
+
+.message-actions a:hover {
+    text-decoration: underline;
+}
+
+.message-content {
+    font-size: 14px;
+    line-height: 1.5;
+
+    /* allow breaking super-long words / URLs */
+    word-wrap: break-word;     
+    overflow-wrap: anywhere;   
+    word-break: break-word;     
+}
+
+.message-item {
+    padding: 10px 14px 8px;
+    border-radius: 12px;
+    background: rgba(9, 84, 160, 0.02);
+    margin-bottom: 8px;
+
+    overflow-wrap: anywhere;
+}
+
+/* nested replies */
+.message-children {
+    margin-top: 6px;
+    padding-left: 14px;
+    border-left: 2px solid rgba(148, 163, 184, 0.35);
+}
+
+/* Parent message section on reply page */
+.parent-message h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.parent-message .message-item {
+    background: rgba(9, 84, 160, 0.02);
+}
+
+/* Reply form spacing */
+.reply-form {
+    margin-top: 24px;
+}
+
+/* Make long text wrap nicely everywhere */
+.message-content {
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* layout for avatar + text */
+.message-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* avatar wrapper */
+.message-avatar {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* make avatar a small circle */
+.message-avatar img {
+    width: 40px;          /* adjust if you want smaller/bigger */
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+/* message content takes remaining space */
+.message-body {
+    flex: 1;
+}
+
+/* empty state */
+.empty-state {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+/* form */
+.chat-form {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.chat-form label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.chat-form textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    margin-top: 4px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    font-size: 14px;
+}
+
+.chat-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 1px rgba(9, 84, 160, 0.2);
+}
+
+/* submit button (WTForms submit input) */
+.chat-form input[type="submit"] {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(9, 84, 160, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-form input[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(9, 84, 160, 0.35);
+}
+
+/* responsive */
+@media (max-width: 768px) {
+    .chat-card {
+        padding: 18px;
+    }
+
+    .chat-header h1 {
+        font-size: 22px;
+    }
+}
+
+/* Override hex pattern background just for the chat page */
+body {
+    background: linear-gradient(135deg, #f7fbff 0%, #e6f1ff 100%) !important;
+}

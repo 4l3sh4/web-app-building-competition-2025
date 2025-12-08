@@ -5,40 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/project-chat.css') }}">
     <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Reply in Project Chat - {{ project.title }}</title>
 </head>
 <body>
-    <h1>Reply in Project Chat: {{ project.title }}</h1>
-
-    <p>
-        <a href="{{ url_for('project_chat', project_id=project.id) }}">Back to chat</a>
-    </p>
-
-    <h2>Parent message</h2>
-    <p>
-        <strong>
-            <a href="{{ url_for('view_user', user_id=parent_message.author.id) }}">
-                {{ parent_message.author.username }}
+    <div class="chat-page-container">
+        <div class="chat-header">
+            <a class="back-link" href="{{ url_for('project_chat', project_id=project.id) }}">
+                ← Back to chat
             </a>
-        </strong>
-        <small>({{ parent_message.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
-        <br>
-        {{ parent_message.content }}
-    </p>
+            <h1>Reply in Project Chat: {{ project.title }}</h1>
+        </div>
 
-    <h3>Your reply</h3>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.content.label }}<br>
-            {{ form.content(rows=3, cols=60) }}
-            {% for error in form.content.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
-    </form>
+        <div class="chat-card">
+            <!-- Parent message -->
+            <div class="parent-message">
+                <h2>Parent message</h2>
+
+                <div class="message-item">
+                    <div class="message-header">
+                        <a href="{{ url_for('view_user', user_id=parent_message.author.id) }}">
+                            {{ parent_message.author.username }}
+                        </a>
+                        <span class="message-meta">
+                            · {{ parent_message.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </span>
+                    </div>
+                    <div class="message-content">
+                        {{ parent_message.content }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reply form -->
+            <div class="chat-form reply-form">
+                <h3>Your reply</h3>
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <p>
+                        {{ form.content(rows=3, placeholder='Type your reply...') }}
+                        {% for error in form.content.errors %}
+                            <span class="error-message">{{ error }}</span>
+                        {% endfor %}
+                    </p>
+                    <p>{{ form.submit() }}</p>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
