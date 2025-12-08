@@ -80,3 +80,21 @@
     height: 50px;
     display: block;
 }
+
+.pill-text {
+	padding: 8px 16px;
+	border-radius: 20px;
+	border: none;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 14px;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+    margin-top: 5px;
+}
+
+.pill-text-blue {
+	background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+	color: white;
+}
