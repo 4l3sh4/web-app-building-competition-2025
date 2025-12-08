@@ -91,10 +91,32 @@
 	text-decoration: none;
 	display: inline-flex;
 	align-items: center;
-    margin-top: 5px;
 }
 
 .pill-text-blue {
 	background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
 	color: white;
+    margin-top: 5px;
+}
+
+.pill-text-no-margin {
+	background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+	color: white;
+    margin-top: 0px;
+}
+
+/* links to threads */
+
+.link-primary {
+    color: #23408e;
+    text-decoration: none;
+    font-size: 0.92rem;
+}
+
+.link-primary:hover {
+    text-decoration: underline;
+}
+
+html.dark-mode .link-primary {
+    color: #93c5fd;
 }

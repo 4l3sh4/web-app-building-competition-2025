@@ -85,14 +85,7 @@
                     </div>
                 {% endif %}
             </div>
-
-            <!-- RIGHT: Back button -->
-            <div class="header-actions">
-                <a href="{{ url_for('directory') }}" class="back-link">← Back</a>
-            </div>
-
         </div>
-
 
             {% if user.role == 'student' %}
 
@@ -154,7 +147,7 @@
                                 <li>
                                     <span class="item-index">{{ loop.index }}.</span>
                                     <a href="{{ url_for('thread_detail', thread_id=t.id) }}"
-                                       class="item-title link">
+                                       class="item-title link-primary">
                                         {{ t.title }}
                                     </a>
                                     {% if t.category %}
@@ -251,8 +244,11 @@
                     </p>
                 {% endif %}
             </div>
+            <div class="header-actions">
+                <a href="{{ url_for('directory') }}" class="pill-text pill-text-no-margin">← Back</a>
+            </div>
         </div>
-
+        
     </div>
 </div>
 </body>

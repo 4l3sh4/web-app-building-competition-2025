@@ -1,3 +1,11 @@
+:root {
+    --tag: #E0EAFF;
+}
+
+html.dark-mode {
+    --tag: rgba(255, 255, 255, 0.107);
+}
+
 .shell {
     width: 100%;
     max-width: 1100px;
@@ -109,7 +117,7 @@ html.dark-mode .panel {
 .profile-name {
     margin: 0;
     font-size: 1.4rem;
-    color: #111827;
+    color: var(--accent-1);
 }
 
 .username {
@@ -145,7 +153,7 @@ html.dark-mode .panel {
 
 .subtitle {
     font-size: 0.9rem;
-    color: #374151;
+    color: var(--text-primary);
     margin-bottom: 4px;
 }
 
@@ -164,9 +172,9 @@ html.dark-mode .panel {
     font-size: 0.78rem;
     padding: 4px 10px;
     border-radius: 999px;
-    background: #eef1ff;
-    color: #1b2a60;
-    border: 1px solid #dde4ff;
+    background: var(--tag);
+    color: var(--accent-1);
+    border: 1px solid var(--accent-1);
     white-space: nowrap;
 }
 
@@ -195,15 +203,6 @@ html.dark-mode .panel {
     font-weight: 600;
 }
 
-.link {
-    color: #0e41b0;
-    text-decoration: none;
-}
-
-.link:hover {
-    text-decoration: underline;
-}
-
 .item-meta {
     font-size: 0.8rem;
     color: #6b7280;
@@ -216,7 +215,6 @@ html.dark-mode .panel {
 }
 
 .side-column .panel {
-    position: sticky;
     top: 80px;
 }
 
@@ -239,15 +237,4 @@ html.dark-mode .panel {
 
 .flash-card {
     margin-bottom: 18px;
-}
-
-.theme-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    height: 48px;
-    width: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }

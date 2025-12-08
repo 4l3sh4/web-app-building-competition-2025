@@ -79,18 +79,6 @@
     font-size: 0.92rem;
 }
 
-/* links */
-
-.link-primary {
-    color: #23408e;
-    text-decoration: none;
-    font-size: 0.92rem;
-}
-
-.link-primary:hover {
-    text-decoration: underline;
-}
-
 /* responsive */
 
 @media (max-width: 900px) {
@@ -461,12 +449,6 @@ html.dark-mode .profile-name,
 html.dark-mode .subtitle,
 html.dark-mode .section-body {
     color: #e2e8f0;
-}
-
-/* links */
-
-html.dark-mode .link-primary {
-    color: #93c5fd;
 }
 
 /* buttons */
