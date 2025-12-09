@@ -105,14 +105,14 @@
                                 <!-- 2) Mentor – Title (title clickable to review page) -->
                                 <div class="request-main">
                                     <a href="{{ url_for('view_user', user_id=req.mentor.id) }}"
-                                    class="mentor-name link-primary">
+                                    class="item-title link-primary">
                                         {{ req.mentor.mentor_profile.full_name
                                         if req.mentor.mentor_profile and req.mentor.mentor_profile.full_name
                                         else req.mentor.username }}
                                     </a>
                                     <span class="request-separator"> | </span>
                                     <a href="{{ url_for('review_mentor_request', req_id=req.id) }}"
-                                    class="request-title link-primary">
+                                    class="item-title link-primary">
                                         {{ req.title }}
                                     </a>
                                 </div>

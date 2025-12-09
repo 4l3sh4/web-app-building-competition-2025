@@ -136,7 +136,7 @@ html.dark-mode {
 /* Type Badge */
 .project-type {
 	display: inline-block;
-	background: linear-gradient(135deg, rgba(9, 84, 160, 0.08), rgba(95, 175, 255, 0.05));
+	background: #F0F6FD;
 	color: var(--accent-1);
 	padding: 6px 12px;
 	border-radius: 999px;
@@ -150,19 +150,17 @@ html.dark-mode {
 }
 
 .project-card:hover .project-type {
-	background: linear-gradient(135deg, rgba(9, 84, 160, 0.12), rgba(95, 175, 255, 0.08));
 	border-color: var(--accent-1);
 }
 
 html.dark-mode .project-type {
-	background: rgba(95, 175, 255, 0.08);
-	color: var(--accent-2);
-	border-color: rgba(95, 175, 255, 0.15);
+	background: var(--accent-2);
+	color: white;
+	border-color: var(--accent-1);
 }
 
 html.dark-mode .project-card:hover .project-type {
-	background: rgba(95, 175, 255, 0.12);
-	border-color: var(--accent-2);
+	border-color: white;
 }
 
 .project-excerpt {
