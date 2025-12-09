@@ -1,0 +1,6 @@
+To run the base:
+1. Go to terminal in VS code then paste 'python -m pip install --user -r requirements.txt' and press Enter.
+2. Press Ctrl+Shift+P.
+3. Type 'Python: Select Interpreter' and press Enter.
+4. Choose Python 3.11.9.
+5. Run the code.
