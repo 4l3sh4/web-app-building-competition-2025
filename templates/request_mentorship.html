@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/request_mentorship.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/fileupload.js') }}"></script>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body>
@@ -60,13 +61,13 @@
 
         <!-- RIGHT: back -->
         <div class="header-actions">
-            <a href="{{ url_for('view_user', user_id=mentor.id) }}" class="back-link">← Back</a>
+            <a href="{{ url_for('view_user', user_id=mentor.id) }}" class="pill-text pill-text-blue">← Back</a>
         </div>
     </div>
 
     {# FORM PANEL #}
     <div class="panel">
-        <div class="section-title">Request Details</div>
+        <div class="section-title"><h2>Request Details</h2></div>
 
         <form method="POST" enctype="multipart/form-data" class="rm-form">
             {{ form.hidden_tag() }}
@@ -102,20 +103,16 @@
             </div>
 
             <div class="rm-field rm-field-half">
-                <label for="{{ form.document.id }}" class="rm-label">
-                    {{ form.document.label.text }} <span class="rm-optional">(optional)</span>
-                </label>
+                <label for="{{ form.document.id }}" class="rm-label">Upload necessary documents<span class="rm-optional"> (optional)</span></label>
+                <label for="{{ form.document.id }}" class="label-change" id="fileInput">{{ form.document.label.text }}</label>
                 {{ form.document(class="rm-file") }}
                 {% for error in form.document.errors %}
                     <div class="rm-error">{{ error }}</div>
                 {% endfor %}
             </div>
-
-            <div class="rm-actions">
-                <button type="submit" class="btn-main">
+                <button type="submit" class="btn-save">
                     {{ form.submit.label.text }}
                 </button>
-            </div>
         </form>
     </div>
 </div>

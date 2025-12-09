@@ -7,6 +7,12 @@
 
 /* form layout */
 
+.section-title {
+    max-width: 760px;
+    margin: 4px auto 0;
+    margin-bottom: 16px;
+}
+
 .rm-form {
     max-width: 760px;
     margin: 4px auto 0;
@@ -16,7 +22,7 @@
     font-size: 0.95rem;
 }
 
-.rm-field {
+.rm-field{
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -64,14 +70,6 @@
     margin-top: 2px;
 }
 
-/* submit button on the right */
-
-.rm-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 4px;
-}
-
 /* flash card already uses .panel + .muted */
 .flash-card {
     margin-bottom: 14px;
@@ -104,17 +102,57 @@ html.dark-mode .label {
     color: #e2e8f0 !important;
 }
 
-/* Links in dark mode */
-html.dark-mode a,
-html.dark-mode .link,
-html.dark-mode .link-primary {
-    color: #93c5fd !important;  /* soft blue, readable */
-}
-
-html.dark-mode a:hover {
-    color: #bfdbfe !important;
-}
-
 html.dark-mode #document{
     color: #202122;
+}
+
+html.dark-mode input[type="text"],
+html.dark-mode input[type="email"],
+html.dark-mode input[type="url"],
+html.dark-mode select,
+html.dark-mode textarea {
+    background: #020617;
+    border-color: #475569;
+    color: #e5e7eb;
+}
+
+input[type="file"]{
+    display: none;
+}
+
+.label-change{
+    display: block;
+    position: relative;
+    width: 140px;
+    height: 35px;
+    margin-top: 3px;
+    border-radius: 25px;
+    background: linear-gradient(40deg, var(--accent-1), var(--accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform .2s ease-out;
+}
+
+.btn-save {
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(90deg,var(--accent-1),var(--accent-2));
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    opacity: 0.95;
 }
