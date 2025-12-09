@@ -9,7 +9,9 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body class="sub-hex-bg">
-<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
 <div class="shell">
 
@@ -115,10 +117,6 @@
                         </div>
                     {% endif %}
 
-                {% else %}
-                    <p class="muted section-body">
-                        No contact information available.
-                    </p>
                 {% endif %}
             </div>
 
@@ -208,6 +206,12 @@
                                     if get_mentorship_type_label is defined
                                     else req.mentorship_type }}
                                 </span>
+
+                                <a href="{{ url_for('mentor_chat', req_id=req.id) }}"
+                                class="btn-main" id="chat">
+                                    Chat
+                                </a>
+
                             </li>
                         {% endfor %}
                     </ul>
@@ -217,7 +221,74 @@
                     </p>
                 {% endif %}
             </div>
+
+            <!-- MY PROJECTS -->
+            <div class="panel">
+                <div class="section-title">My Projects</div>
+
+                {% if my_projects and my_projects|length > 0 %}
+                    <ol class="item-list simple-list">
+                        {% for project in my_projects %}
+                            {% set join_count = join_counts_by_project.get(project.id, 0) %}
+                            <li class="project-row">
+                                <div class="project-main">
+                                    <span class="item-index">{{ loop.index }}.</span>
+                                    <a href="{{ url_for('project_detail', project_id=project.id) }}"
+                                    class="item-title link-primary">
+                                        {{ project.title }}
+                                    </a>
+                                    <span class="item-meta">— {{ project.project_type }}</span>
+                                </div>
+
+                                <div class="project-tags">
+                                    {% if join_count > 0 %}
+                                        <a href="{{ url_for('manage_project_requests', project_id=project.id) }}"
+                                        class="pill-join">
+                                            Join Requests ({{ join_count }})
+                                        </a>
+                                    {% endif %}
+                                    {% if unread_chat_by_project.get(project.id) %}
+                                        <a href="{{ url_for('project_chat', project_id=project.id) }}" class="pill-chat">New Chat</a>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t created any projects yet.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- MY DISCUSSIONS -->
+            <div class="panel">
+                <div class="section-title">My Discussions</div>
+
+                {% if my_threads and my_threads|length > 0 %}
+                    <ol class="item-list simple-list">
+                        {% for thread in my_threads %}
+                            <li>
+                                <span class="item-index">{{ loop.index }}.</span>
+                                <a href="{{ url_for('thread_detail', thread_id=thread.id) }}"
+                                class="item-title link-primary">
+                                    {{ thread.title }}
+                                </a>
+                                <span class="item-meta">
+                                    — {{ thread.created_at.strftime('%d %b %Y') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t started any discussions yet.
+                    </p>
+                {% endif %}
+            </div>
+
         </div>
+
 
         <!-- RIGHT COLUMN -->
         <div class="dashboard-side">

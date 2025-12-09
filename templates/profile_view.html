@@ -10,7 +10,9 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body>
-<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
 <div class="shell">
 
@@ -103,6 +105,22 @@
                                 You haven't added a bio yet. You can edit it from your dashboard.
                             {% else %}
                                 No bio has been added yet.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <br>
+                    {% if profile.github_profile or profile.linkedin_profile %}
+                        <div class="body-text profile-links">
+                            {% if profile.github_profile %}
+                                <a href="{{ profile.github_profile }}" target="_blank" class="link-primary">
+                                    GitHub →
+                                </a>
+                            {% endif %}
+                            {% if profile.linkedin_profile %}
+                                {% if profile.github_profile %} · {% endif %}
+                                <a href="{{ profile.linkedin_profile }}" target="_blank" class="link-primary">
+                                    LinkedIn →
+                                </a>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -212,9 +230,6 @@
                                 </a>
                             </div>
                         {% endif %}
-                    {% else %}
-                        <div class="muted">
-                            No contact information available.
                         </div>
                     {% endif %}
                 </div>
@@ -235,19 +250,42 @@
 
         <!-- SIDE COLUMN -->
         <div class="side-column">
-            <div class="panel">
+            <div class="panel actions-panel">
                 <div class="section-title">Actions</div>
 
-                {% if user.role == 'mentor' and current_user.is_authenticated and current_user.role == 'student' and not is_self %}
-                    <p class="muted" style="margin-bottom:8px;">
-                        Interested in guidance from this mentor?
+                {% if current_user.role == 'student' and user.role == 'mentor' and not is_self %}
+                    {% if accepted_mentorship %}
+                        <p class="muted section-body">
+                            You are currently a mentee of this mentor.
+                        </p>
+                        <a href="{{ url_for('mentor_chat', req_id=accepted_mentorship.id) }}"
+                        class="btn-main">
+                            Chat
+                        </a>
+                    {% else %}
+                        <p class="muted section-body">
+                            Interested in guidance from this mentor?
+                        </p>
+                        <br>
+                        <a href="{{ url_for('request_mentorship', mentor_id=user.id) }}"
+                        class="btn-main">
+                            Request Mentorship
+                        </a>
+                    {% endif %}
+
+                {% elif current_user.role == 'mentor' and user.role == 'student' and accepted_mentorship %}
+                    <p class="muted section-body">
+                        This student is one of your mentees.
                     </p>
-                    <a href="{{ url_for('request_mentorship', mentor_id=user.id) }}" class="btn-main">
-                        Request Mentorship
+                    <br>
+                    <a href="{{ url_for('mentor_chat', req_id=accepted_mentorship.id) }}"
+                    class="btn-main">
+                        Chat
                     </a>
+
                 {% else %}
-                    <p class="muted">
-                        No available actions.
+                    <p class="muted section-body">
+                        No actions available.
                     </p>
                 {% endif %}
             </div>

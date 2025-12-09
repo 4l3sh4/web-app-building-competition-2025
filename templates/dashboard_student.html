@@ -10,7 +10,9 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body class="sub-hex-bg">
-<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
 <div class="shell">
 
@@ -56,6 +58,25 @@
                                 · {{ specialization_full }}
                             {% endif %}
                         </div>
+
+                        <div class="summary-links">
+                            {% if student_profile.github_profile %}
+                                <a href="{{ student_profile.github_profile }}"
+                                target="_blank"
+                                class="link-primary">
+                                    GitHub →
+                                </a>
+                            {% endif %}
+
+                            {% if student_profile.linkedin_profile %}
+                                {% if student_profile.github_profile %} · {% endif %}
+                                <a href="{{ student_profile.linkedin_profile }}"
+                                target="_blank"
+                                class="link-primary">
+                                    LinkedIn →
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="summary-actions">
@@ -66,6 +87,17 @@
                 </div>
             </div>
 
+            <!-- ABOUT ME -->
+            <div class="panel">
+                <div class="section-title">About Me</div>
+                <p class="section-body">
+                    {% if student_profile.bio %}
+                        {{ student_profile.bio }}
+                    {% else %}
+                        You haven't added a bio yet. Tell mentors and teammates more about yourself!
+                    {% endif %}
+                </p>
+            </div>
             <!-- MY PROJECTS -->
             <div class="panel">
                 <div class="section-title">My Projects</div>
@@ -73,13 +105,28 @@
                 {% if my_projects and my_projects|length > 0 %}
                     <ol class="item-list simple-list">
                         {% for project in my_projects %}
-                            <li>
-                                <span class="item-index">{{ loop.index }}.</span>
-                                <a href="{{ url_for('project_detail', project_id=project.id) }}"
-                                class="item-title link-primary">
-                                    {{ project.title }}
-                                </a>
-                                <span class="item-meta">— {{ project.project_type }}</span>
+                            {% set join_count = join_counts_by_project.get(project.id, 0) %}
+                            <li class="project-row">
+                                <div class="project-main">
+                                    <span class="item-index">{{ loop.index }}.</span>
+                                    <a href="{{ url_for('project_detail', project_id=project.id) }}"
+                                    class="item-title link-primary">
+                                        {{ project.title }}
+                                    </a>
+                                    <span class="item-meta">— {{ project.project_type }}</span>
+                                </div>
+
+                                <div class="project-tags">
+                                    {% if join_count > 0 %}
+                                        <a href="{{ url_for('manage_project_requests', project_id=project.id) }}"
+                                        class="pill-join">
+                                            Join Requests ({{ join_count }})
+                                        </a>
+                                    {% endif %}
+                                    {% if unread_chat_by_project.get(project.id) %}
+                                        <a href="{{ url_for('project_chat', project_id=project.id) }}" class="pill-chat">New Chat</a>
+                                    {% endif %}
+                                </div>
                             </li>
                         {% endfor %}
                     </ol>
@@ -121,6 +168,14 @@
                                 <span class="status-pill status-{{ req.status|lower() }}">
                                     {{ req.status }}
                                 </span>
+
+                                {% if req.status == 'Accepted' %}
+                                    <a href="{{ url_for('mentor_chat', req_id=req.id) }}"
+                                    class="btn-main" id="chat">
+                                        Chat with Mentor
+                                    </a>
+                                {% endif %}
+
                             </li>
                         {% endfor %}
                     </ol>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mentor_chat.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+
+    <title>Mentorship Chat</title>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
+
+{% if current_user.id == req.mentor_id %}
+    {% set chat_profile = req.student.student_profile %}
+{% else %}
+    {% set chat_profile = req.mentor.mentor_profile %}
+{% endif %}
+
+<div class="page-shell">
+
+    <a href="{{ url_for('dashboard') }}" class="back-link">
+        ← Back to Dashboard
+    </a>
+
+    <div class="dm-card">
+        <section class="dm-section dm-section-top">
+            <div class="section-header">
+                <img
+                    src="{{ url_for('static', filename='uploads/pfp/' + chat_profile.pfp if chat_profile and chat_profile.pfp else 'uploads/pfp/default_pfp.png') }}"
+                    class="chat-pfp"
+                    alt="Profile picture">
+
+                <span class="chat-name">
+                    {% if current_user.id == req.mentor_id %}
+                        {{ req.student.student_profile.full_name }}
+                    {% else %}
+                        {{ req.mentor.mentor_profile.full_name }}
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="dm-messages" id="dm-messages">
+                {% if messages|length == 0 %}
+                    <p class="muted section-body">
+                        No messages yet. Start the conversation!
+                    </p>
+                {% else %}
+                    {% for msg in messages %}
+                        <div class="dm-bubble
+                            {% if msg.sender_id == current_user.id %}
+                                dm-outgoing
+                            {% else %}
+                                dm-incoming
+                            {% endif %}
+                        ">
+                            <div class="dm-text">
+                                {{ msg.content }}
+                            </div>
+
+                            <div class="dm-meta
+                                {% if msg.sender_id == current_user.id %}
+                                    meta-right
+                                {% else %}
+                                    meta-left
+                                {% endif %}
+                            ">
+                                <span class="dm-sender">
+                                    {% if msg.sender_id == current_user.id %}
+                                        You
+                                    {% else %}
+                                        {% if msg.sender.role == 'student' and msg.sender.student_profile %}
+                                            {{ msg.sender.student_profile.full_name }}
+                                        {% elif msg.sender.role == 'mentor' and msg.sender.mentor_profile %}
+                                            {{ msg.sender.mentor_profile.full_name }}
+                                        {% else %}
+                                            {{ msg.sender.username }}
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                                <span class="dm-time">
+                                    {{ msg.created_at.strftime('%H:%M') }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </section>
+
+        <hr class="dm-divider">
+
+        <section class="dm-section dm-section-bottom">
+            <h2 class="section-title">Send a new message</h2>
+
+            <form method="POST" class="dm-input-row">
+                {{ form.hidden_tag() }}
+
+                {{ form.content(
+                    class_="dm-textarea",
+                    rows=2,
+                    placeholder="Type your message..."
+                ) }}
+
+                <button type="submit" class="btn-main dm-send-btn">
+                    Send
+                </button>
+            </form>
+        </section>
+    </div>
+</div>
+
+<script>
+    const box = document.getElementById('dm-messages');
+    if (box) {
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

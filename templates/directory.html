@@ -10,7 +10,9 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
     <div class="shell">
         <!-- Header panel -->

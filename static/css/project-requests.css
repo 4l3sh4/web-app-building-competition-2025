@@ -99,6 +99,45 @@ html.dark-mode .back-link {
     margin-top: 8px;
 }
 
+/* Current members list */
+.current-members ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 8px;
+}
+
+.current-members li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+/* username link */
+.current-members .member-name {
+    color: var(--accent-1);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.current-members .member-name:hover {
+    text-decoration: underline;
+}
+
+/* "Remove" link – smaller + not blue */
+.current-members .member-remove-link {
+    font-size: 12px;          /* smaller than username */
+    color: #e53e3e !important; /* override global blue */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.current-members .member-remove-link:hover {
+    text-decoration: underline;
+    color: #c53030 !important;
+}
+
 .request-card {
     background: rgba(9, 84, 160, 0.02);
     border-radius: 12px;

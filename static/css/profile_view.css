@@ -206,6 +206,13 @@ html.dark-mode .panel {
     margin-bottom: 6px;
 }
 
+.section-body {
+    font-size: 0. nine rem;
+    color: #374151;
+    line-height: 1.6;
+    padding-bottom: 5px;
+}
+
 .side-column .panel {
     top: 80px;
 }

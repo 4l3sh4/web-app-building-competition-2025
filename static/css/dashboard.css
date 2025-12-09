@@ -172,6 +172,11 @@
     text-decoration: none;
 }
 
+#chat {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+}
+
 .btn-main:hover {
     opacity: 0.95;
 }
@@ -523,4 +528,55 @@ html.dark-mode .status-rejected {
 .item-meta {
     font-size: 0.9rem;
     color: #7b7b7b; /* soft muted grey */
+}
+
+.project-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+}
+
+.project-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+}
+
+.project-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* pill for join requests */
+.pill-join {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background-color: #ffe9e0;
+    color: #c0392b;
+    text-decoration: none;
+}
+
+.pill-join:hover {
+    background-color: #ffd6c4;
+}
+
+/* will use later for New Chat */
+.pill-chat {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background-color: #e6f3ff;
+    color: #1e6bb8;
 }
