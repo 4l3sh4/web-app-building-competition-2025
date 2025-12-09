@@ -112,6 +112,14 @@
     margin-top: 3px;
 }
 
+.pill-bottom {
+    margin-bottom: 10px;
+}
+
+.pill-more-bottom {
+    margin-bottom: 20px;
+}
+
 /* links to threads */
 
 .link-primary {

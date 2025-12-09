@@ -31,12 +31,12 @@
 
     <div class="project-detail-container">
         <!-- Back link -->
-        <a href="{{ url_for('project_list') }}" class="back-link">
+        <a href="{{ url_for('project_list') }}" class="pill-text pill-text-blue pill-more-bottom">
             ← Back to Project Board
         </a>
 
         <!-- Header -->
-        <header class="project-header">
+        <header class="project-header detail-card">
             {% if project.project_type %}
                 <div class="project-type-badge">
                     {{ project.project_type }}
