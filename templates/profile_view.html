@@ -259,7 +259,6 @@
             <div class="panel actions-panel">
                 <div class="section-title">Actions</div>
 
-                {# Student viewing a mentor #}
                 {% if current_user.role == 'student' and user.role == 'mentor' and not is_self %}
                     {% if accepted_mentorship %}
                         <p class="muted section-body">
@@ -279,10 +278,8 @@
                             Request Mentorship
                         </a>
                     {% endif %}
-                {% endif %}
 
-                {# Mentor viewing their mentee, also show Chat #}
-                {% if current_user.role == 'mentor' and user.role == 'student' and accepted_mentorship %}
+                {% elif current_user.role == 'mentor' and user.role == 'student' and accepted_mentorship %}
                     <p class="muted section-body">
                         This student is one of your mentees.
                     </p>
@@ -291,6 +288,7 @@
                     class="btn-main">
                         Chat
                     </a>
+
                 {% else %}
                     <p class="muted section-body">
                         No actions available.
