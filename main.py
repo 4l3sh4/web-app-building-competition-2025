@@ -1040,6 +1040,35 @@ def leave_project(project_id):
     return redirect(url_for('project_detail', project_id=project_id))
 
 
+@app.route('/projects/<int:project_id>/remove_member/<int:user_id>')
+@login_required
+def remove_project_member(project_id, user_id):
+    project = Project.query.get_or_404(project_id)
+
+    # Only owner can remove members
+    if project.owner_id != current_user.id:
+        abort(403)
+
+    # Don’t allow removing the owner
+    if user_id == project.owner_id:
+        flash("You can't remove yourself as the project owner.", "error")
+        return redirect(url_for('manage_project_requests', project_id=project.id))
+
+    membership = ProjectMember.query.filter_by(
+        project_id=project.id,
+        user_id=user_id
+    ).first()
+
+    if not membership:
+        flash("That user is not a member of this project.", "error")
+        return redirect(url_for('manage_project_requests', project_id=project.id))
+
+    db.session.delete(membership)
+    db.session.commit()
+    flash("Member removed from the project.", "success")
+    return redirect(url_for('manage_project_requests', project_id=project.id))
+
+
 @app.route('/projects/<int:project_id>/chat', methods=['GET', 'POST'])
 @login_required
 def project_chat(project_id):
