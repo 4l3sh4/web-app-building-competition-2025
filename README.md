@@ -104,20 +104,3 @@ We call it **eBhive** 🐝
 ```bash
 git clone https://github.com/<your-username>/web-app-building-competition-2025.git
 cd web-app-building-competition-2025
-
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-
-### 3. Running the App
-
-- Run main,py
-- By default, the app will run at:
-``bash
-```markdown
-### 2. Install dependencies
-
-> (Optional but recommended) Activate your virtual environment first, then:
-
-```bash
-pip install -r requirements.txt
