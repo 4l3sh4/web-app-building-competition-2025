@@ -1,15 +1,11 @@
-# web-app-building-competition-2025
+# eBhive 🐝
 
-A web application made by me, Ariana and Amirah to compete in MMU's **STEM Fun Carnival 2025 Web App Building Competition**.
-
-Our project is a mentorship & collaboration platform for MMU students and mentors, designed to make it easier to:
+A mentorship & collaboration platform for MMU students and mentors, designed to make it easier to:
 
 - find mentors,
 - discover project opportunities,
 - form teams, and
 - communicate in one place.
-
-We call it **eBhive** 🐝
 
 ---
 
