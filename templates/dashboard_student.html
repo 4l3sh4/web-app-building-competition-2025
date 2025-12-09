@@ -167,6 +167,14 @@
                                 <span class="status-pill status-{{ req.status|lower() }}">
                                     {{ req.status }}
                                 </span>
+
+                                {% if req.status == 'Accepted' %}
+                                    <a href="{{ url_for('mentor_chat', req_id=req.id) }}"
+                                    class="btn-main" id="chat">
+                                        Chat with Mentor
+                                    </a>
+                                {% endif %}
+
                             </li>
                         {% endfor %}
                     </ol>

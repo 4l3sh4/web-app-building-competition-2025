@@ -115,10 +115,6 @@
                         </div>
                     {% endif %}
 
-                {% else %}
-                    <p class="muted section-body">
-                        No contact information available.
-                    </p>
                 {% endif %}
             </div>
 
@@ -208,6 +204,12 @@
                                     if get_mentorship_type_label is defined
                                     else req.mentorship_type }}
                                 </span>
+
+                                <a href="{{ url_for('mentor_chat', req_id=req.id) }}"
+                                class="btn-main" id="chat">
+                                    Chat
+                                </a>
+
                             </li>
                         {% endfor %}
                     </ul>

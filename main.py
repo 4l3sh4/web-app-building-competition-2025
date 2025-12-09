@@ -438,6 +438,30 @@ class MentorshipRequestForm(FlaskForm):
 
     submit = SubmitField("Submit request")
 
+class MentorChat(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    mentorship_request_id = db.Column(
+        db.Integer,
+        db.ForeignKey('mentorship_request.id'),
+        nullable=False
+    )
+
+    sender_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id'),
+        nullable=False
+    )
+
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sender = db.relationship('User')
+    mentorship_request = db.relationship(
+        'MentorshipRequest',
+        backref=db.backref('messages', lazy='dynamic')
+    )
+
 class ProjectForm(FlaskForm):
     title = StringField(
         "Project / Opportunity Title",
@@ -468,6 +492,12 @@ class ProjectForm(FlaskForm):
     )
     submit = SubmitField("Create")
 
+class MentorChatForm(FlaskForm):
+    content = TextAreaField(
+        "Message",
+        validators=[InputRequired()]
+    )
+    submit = SubmitField("Send")
 
 class ProjectMessageForm(FlaskForm):
     content = TextAreaField(
@@ -892,6 +922,34 @@ def view_user(user_id):
         student_threads = Thread.query.filter_by(creator_id=user.id) \
                                       .order_by(Thread.created_at.desc()) \
                                       .limit(5).all()
+    
+        accepted_mentorship = None
+
+    # current user is student, viewing a mentor
+    if current_user.role == 'student' and user.role == 'mentor':
+        accepted_mentorship = (
+            MentorshipRequest.query
+            .filter_by(
+                student_id=current_user.id,
+                mentor_id=user.id,
+                status='Accepted'
+            )
+            .order_by(MentorshipRequest.responded_at.desc())
+            .first()
+        )
+
+    # current user is mentor, viewing a student
+    elif current_user.role == 'mentor' and user.role == 'student':
+        accepted_mentorship = (
+            MentorshipRequest.query
+            .filter_by(
+                student_id=user.id,
+                mentor_id=current_user.id,
+                status='Accepted'
+            )
+            .order_by(MentorshipRequest.responded_at.desc())
+            .first()
+        )
 
     return render_template(
         'profile_view.html',
@@ -902,6 +960,7 @@ def view_user(user_id):
         get_programme_full_name=get_programme_full_name,
         get_spec_full_name=get_spec_full_name,
         get_faculty_full_name=get_faculty_full_name,
+        accepted_mentorship=accepted_mentorship
     )
 
 
@@ -1619,6 +1678,45 @@ def review_mentor_request(req_id):
         is_mentor=is_mentor,
         is_student=is_student,
         mentor_type=get_mentorship_type_label(req.mentorship_type)
+    )
+
+@app.route('/mentorship/<int:req_id>/chat', methods=['GET', 'POST'])
+@login_required
+def mentor_chat(req_id):
+    req = MentorshipRequest.query.get_or_404(req_id)
+
+    if current_user.id not in (req.student_id, req.mentor_id):
+        abort(403)
+
+    if req.status != 'Accepted':
+        flash("Chat is only available after the mentorship is accepted.", "warning")
+        return redirect(url_for('dashboard'))
+
+    form = MentorChatForm()
+
+    if form.validate_on_submit():
+        msg = MentorChat(
+            mentorship_request_id=req.id,
+            sender_id=current_user.id,
+            content=form.content.data.strip()
+        )
+        db.session.add(msg)
+        db.session.commit()
+
+        return redirect(url_for('mentor_chat', req_id=req.id))
+
+    messages = (
+        MentorChat.query
+        .filter_by(mentorship_request_id=req.id)
+        .order_by(MentorChat.created_at.asc())
+        .all()
+    )
+
+    return render_template(
+        'mentor_chat.html',
+        req=req,
+        messages=messages,
+        form=form
     )
 
 if __name__ == '__main__':
