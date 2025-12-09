@@ -17,18 +17,15 @@ html.dark-mode {
     --muted: #a0aec0;
 }
 
-/* page layout */
-body {
-    color: var(--text-primary);
-    padding: 32px 16px;
-}
-
+/* PAGE LAYOUT – keep body controlled by global styles.css / sub-hex-bg.css */
 .chat-page-container {
     max-width: 1000px;
-    margin: 0 auto;
+    margin: 32px auto 40px;   /* similar spacing to other sub pages */
+    padding: 0 16px;
+    color: var(--text-primary);
 }
 
-/* header */
+/* HEADER */
 .chat-header {
     margin-bottom: 20px;
 }
@@ -57,29 +54,26 @@ html.dark-mode .back-link {
     color: var(--accent-2);
 }
 
-/* main card */
+/* MAIN CARD */
 .chat-card {
-    position: relative;              
-    z-index: 1;                      
+    position: relative;
+    z-index: 1;
     border-radius: 16px;
     border: 1px solid var(--border);
     box-shadow: 0 4px 20px rgba(2, 6, 23, 0.08);
     padding: 20px 24px 24px;
-
-    background-color: var(--card-bg); 
-    overflow: hidden;                
+    background-color: var(--card-bg);
+    overflow: hidden;
 }
 
-/* solid inner layer */
 .chat-card::before {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
     background-color: var(--card-bg);
-    z-index: -1;                      
+    z-index: -1;
 }
-
 
 /* section titles inside card */
 .chat-card h2 {
@@ -93,7 +87,7 @@ html.dark-mode .back-link {
     margin-bottom: 6px;
 }
 
-/* messages list */
+/* MESSAGES LIST */
 .messages-list {
     list-style: none;
     padding-left: 0;
@@ -105,12 +99,41 @@ html.dark-mode .back-link {
     border-radius: 12px;
     background: rgba(9, 84, 160, 0.02);
     margin-bottom: 8px;
+    overflow-wrap: anywhere;
 }
 
 html.dark-mode .message-item {
     background: rgba(255, 255, 255, 0.03);
 }
 
+/* layout for avatar + text */
+.message-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* avatar wrapper */
+.message-avatar {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* avatar look */
+.message-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+/* message content takes remaining space */
+.message-body {
+    flex: 1;
+}
+
+/* header row */
 .message-header {
     display: flex;
     flex-wrap: wrap;
@@ -145,33 +168,23 @@ html.dark-mode .message-item {
     text-decoration: underline;
 }
 
+/* message text */
 .message-content {
     font-size: 14px;
     line-height: 1.5;
-
-    /* allow breaking super-long words / URLs */
-    word-wrap: break-word;     
-    overflow-wrap: anywhere;   
-    word-break: break-word;     
-}
-
-.message-item {
-    padding: 10px 14px 8px;
-    border-radius: 12px;
-    background: rgba(9, 84, 160, 0.02);
-    margin-bottom: 8px;
-
+    word-wrap: break-word;
     overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
-/* nested replies */
+/* NESTED REPLIES */
 .message-children {
     margin-top: 6px;
     padding-left: 14px;
     border-left: 2px solid rgba(148, 163, 184, 0.35);
 }
 
-/* Parent message section on reply page */
+/* Parent message section (if you ever reuse it) */
 .parent-message h2 {
     font-size: 18px;
     margin-bottom: 8px;
@@ -181,55 +194,65 @@ html.dark-mode .message-item {
     background: rgba(9, 84, 160, 0.02);
 }
 
-/* Reply form spacing */
-.reply-form {
-    margin-top: 24px;
+/* INLINE REPLY BOX (new) */
+.inline-reply {
+    margin-top: 6px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(9, 84, 160, 0.03);
 }
 
-/* Make long text wrap nicely everywhere */
-.message-content {
-    font-size: 14px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+html.dark-mode .inline-reply {
+    background: rgba(255, 255, 255, 0.04);
 }
 
-/* layout for avatar + text */
-.message-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+.inline-reply textarea {
+    width: 100%;
+    min-height: 60px;
+    resize: vertical;
+    margin-top: 4px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    font-size: 13px;
 }
 
-/* avatar wrapper */
-.message-avatar {
-    flex-shrink: 0;
-    margin-top: 2px;
+.inline-reply textarea:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 1px rgba(9, 84, 160, 0.18);
 }
 
-/* make avatar a small circle */
-.message-avatar img {
-    width: 40px;          /* adjust if you want smaller/bigger */
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
+/* small button used in inline reply */
+.inline-reply .btn-small,
+.inline-reply button[type="submit"] {
+    margin-top: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-2) 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(9, 84, 160, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* message content takes remaining space */
-.message-body {
-    flex: 1;
+.inline-reply .btn-small:hover,
+.inline-reply button[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(9, 84, 160, 0.33);
 }
 
-/* empty state */
+/* EMPTY STATE */
 .empty-state {
     font-size: 14px;
     color: var(--muted);
     margin-top: 8px;
 }
 
-/* form */
+/* MAIN FORM AT BOTTOM */
 .chat-form {
     margin-top: 20px;
     padding-top: 14px;
@@ -278,7 +301,7 @@ html.dark-mode .message-item {
     box-shadow: 0 6px 18px rgba(9, 84, 160, 0.35);
 }
 
-/* responsive */
+/* RESPONSIVE */
 @media (max-width: 768px) {
     .chat-card {
         padding: 18px;
@@ -287,9 +310,4 @@ html.dark-mode .message-item {
     .chat-header h1 {
         font-size: 22px;
     }
-}
-
-/* Override hex pattern background just for the chat page */
-body {
-    background: linear-gradient(135deg, #f7fbff 0%, #e6f1ff 100%) !important;
 }

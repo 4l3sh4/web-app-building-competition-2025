@@ -270,6 +270,17 @@ class ProjectMessage(db.Model):
         lazy='dynamic'
     )
 
+def get_message_depth(message):
+    """Return depth of a message in the thread tree.
+    Top-level message = 1, its reply = 2, etc.
+    """
+    depth = 1
+    current = message
+    while current.parent is not None:
+        depth += 1
+        current = current.parent
+    return depth
+
 
 class Thread(db.Model):
     """Discussion threads"""
@@ -1045,12 +1056,31 @@ def project_chat(project_id):
         db.session.commit()
 
     form = ProjectMessageForm()
+
     if form.validate_on_submit():
+        parent_id_raw = request.form.get('parent_id')
+        parent_msg = None
+
+        if parent_id_raw:
+            try:
+                pid = int(parent_id_raw)
+                parent_msg = ProjectMessage.query.get(pid)
+                # safety: parent must belong to this project
+                if not parent_msg or parent_msg.project_id != project.id:
+                    parent_msg = None
+            except (ValueError, TypeError):
+                parent_msg = None
+
+        # 🔒 depth limit: new message max level = 4
+        if parent_msg is not None and get_message_depth(parent_msg) >= 4:
+            flash("Replies are limited to 4 levels deep.", "error")
+            return redirect(url_for('project_chat', project_id=project.id))
+
         msg = ProjectMessage(
             project_id=project.id,
             author_id=current_user.id,
             content=form.content.data,
-            parent_id=None   # 🔹 top-level message
+            parent_id=parent_msg.id if parent_msg else None
         )
         db.session.add(msg)
         db.session.commit()
@@ -1065,40 +1095,8 @@ def project_chat(project_id):
         project=project,
         form=form,
         messages=messages,
-        members=members
-    )
-
-
-@app.route('/projects/<int:project_id>/chat/reply/<int:parent_id>', methods=['GET', 'POST'])
-@login_required
-def reply_project_message(project_id, parent_id):
-    project = Project.query.get_or_404(project_id)
-    parent_message = ProjectMessage.query.get_or_404(parent_id)
-
-    # safety: ensure parent message belongs to this project
-    if parent_message.project_id != project.id:
-        return redirect(url_for('project_chat', project_id=project.id))
-
-    form = ProjectMessageForm()
-    if form.validate_on_submit():
-        reply = ProjectMessage(
-            project_id=project.id,
-            author_id=current_user.id,
-            content=form.content.data,
-            parent_id=parent_message.id   # 🔹 link to parent
-        )
-        db.session.add(reply)
-        db.session.commit()
-        return redirect(url_for('project_chat', project_id=project.id))
-
-    members = ProjectMember.query.filter_by(project_id=project.id).all()
-
-    return render_template(
-        'reply_project_message.html',
-        project=project,
-        parent_message=parent_message,
-        form=form,
-        members=members
+        members=members,
+        get_message_depth=get_message_depth   # 👈 make available in Jinja
     )
 
 

@@ -10,6 +10,26 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Project Chat - {{ project.title }}</title>
 </head>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.reply-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const mid = this.dataset.messageId;
+            const box = document.getElementById('reply-form-' + mid);
+            if (box) {
+                if (box.style.display === 'none' || box.style.display === '') {
+                    box.style.display = 'block';
+                } else {
+                    box.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+</script>
+
 <body>
     <div class="chat-page-container">
         <div class="chat-header">
@@ -32,8 +52,6 @@
             {% macro render_message(message, all_messages) %}
                 <li class="message-item">
                     <div class="message-row">
-
-                        <!-- AVATAR -->
                         <div class="message-avatar">
                             {% set profile = message.author.student_profile
                                              or message.author.mentor_profile %}
@@ -48,7 +66,6 @@
                             {% endif %}
                         </div>
 
-                        <!-- MESSAGE BODY -->
                         <div class="message-body">
                             <div class="message-header">
                                 <a href="{{ url_for('view_user', user_id=message.author.id) }}">
@@ -57,10 +74,12 @@
                                 <span class="message-meta">
                                     · {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
                                 </span>
+
+                                {% set depth = get_message_depth(message) %}
                                 <span class="message-actions">
-                                    · <a href="{{ url_for('reply_project_message',
-                                                          project_id=project.id,
-                                                          parent_id=message.id) }}">Reply</a>
+                                    {% if depth < 4 %}
+                                        · <a href="#" class="reply-toggle" data-message-id="{{ message.id }}">Reply</a>
+                                    {% endif %}
                                 </span>
                             </div>
 
@@ -68,19 +87,33 @@
                                 {{ message.content }}
                             </div>
 
-                            {% set children = all_messages
-                                | selectattr('parent_id', 'equalto', message.id) | list %}
-                            {% if children %}
-                                <ul class="messages-list message-children">
-                                    {% for child in children %}
-                                        {{ render_message(child, all_messages) }}
-                                    {% endfor %}
-                                </ul>
+                            {% if depth < 4 %}
+                            <div class="inline-reply" id="reply-form-{{ message.id }}" style="display: none; margin-top: 6px;">
+                                <form method="POST" action="{{ url_for('project_chat', project_id=project.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ form.csrf_token._value() }}">
+                                    <input type="hidden" name="parent_id" value="{{ message.id }}">
+                                    <textarea name="content"
+                                              rows="2"
+                                              placeholder="Reply to this message..."
+                                              required></textarea>
+                                    <button type="submit" class="btn-small">Reply</button>
+                                </form>
+                            </div>
                             {% endif %}
-                        </div>
-                    </div>
-                </li>
-            {% endmacro %}
+
+                {% set children = all_messages
+                    | selectattr('parent_id', 'equalto', message.id) | list %}
+                {% if children %}
+                    <ul class="messages-list message-children">
+                        {% for child in children %}
+                            {{ render_message(child, all_messages) }}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </li>
+{% endmacro %}
 
 
             {% if messages %}
