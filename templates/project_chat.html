@@ -3,66 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/project-chat.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>Project Chat - {{ project.title }}</title>
 </head>
 <body>
-    <h1>Project Chat: {{ project.title }}</h1>
+    <div class="chat-page-container">
+        <div class="chat-header">
+            <a class="back-link" href="{{ url_for('project_detail', project_id=project.id) }}">
+                ← Back to Project Details
+            </a>
+            <h1>Project Chat: {{ project.title }}</h1>
+        </div>
 
-    <p>
-        <a href="{{ url_for('project_detail', project_id=project.id) }}">Back to Project Details</a> |
-        <a href="{{ url_for('leave_project', project_id=project.id) }}">Leave Project</a>
-    </p>
+        <div class="chat-card">
+            {% if project.owner_id != current_user.id %}
+                <p class="message-meta" style="margin-bottom: 10px;">
+                    You can leave this project at any time:
+                    <a href="{{ url_for('leave_project', project_id=project.id) }}">Leave Project</a>
+                </p>
+            {% endif %}
 
-    <h2>Messages</h2>
+            <h2>Chats</h2>
 
-    {# ---------- NESTED MESSAGE MACRO ---------- #}
-    {% macro render_message(message, all_messages) %}
-        <li>
-            <strong>
-                <a href="{{ url_for('view_user', user_id=message.author.id) }}">
-                    {{ message.author.username }}
-                </a>
-            </strong>
-            <small>({{ message.created_at.strftime('%Y-%m-%d %H:%M') }})</small>
-            · <a href="{{ url_for('reply_project_message', project_id=project.id, parent_id=message.id) }}">Reply</a>
-            <br>
-            {{ message.content }}
+            {% macro render_message(message, all_messages) %}
+                <li class="message-item">
+                    <div class="message-row">
 
-            {# find replies #}
-            {% set children = all_messages | selectattr('parent_id', 'equalto', message.id) | list %}
-            {% if children %}
-                <ul>
-                    {% for child in children %}
-                        {{ render_message(child, all_messages) }}
+                        <!-- AVATAR -->
+                        <div class="message-avatar">
+                            {% set profile = message.author.student_profile
+                                             or message.author.mentor_profile %}
+                            {% if profile and profile.pfp %}
+                                <img src="{{ url_for('static',
+                                             filename='uploads/pfp/' + profile.pfp) }}"
+                                     alt="Profile picture">
+                            {% else %}
+                                <img src="{{ url_for('static',
+                                             filename='uploads/pfp/default_pfp.png') }}"
+                                     alt="Default profile picture">
+                            {% endif %}
+                        </div>
+
+                        <!-- MESSAGE BODY -->
+                        <div class="message-body">
+                            <div class="message-header">
+                                <a href="{{ url_for('view_user', user_id=message.author.id) }}">
+                                    {{ message.author.username }}
+                                </a>
+                                <span class="message-meta">
+                                    · {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </span>
+                                <span class="message-actions">
+                                    · <a href="{{ url_for('reply_project_message',
+                                                          project_id=project.id,
+                                                          parent_id=message.id) }}">Reply</a>
+                                </span>
+                            </div>
+
+                            <div class="message-content">
+                                {{ message.content }}
+                            </div>
+
+                            {% set children = all_messages
+                                | selectattr('parent_id', 'equalto', message.id) | list %}
+                            {% if children %}
+                                <ul class="messages-list message-children">
+                                    {% for child in children %}
+                                        {{ render_message(child, all_messages) }}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+            {% endmacro %}
+
+
+            {% if messages %}
+                <ul class="messages-list">
+                    {% for message in messages if not message.parent_id %}
+                        {{ render_message(message, messages) }}
                     {% endfor %}
                 </ul>
+            {% else %}
+                <p class="empty-state">No messages yet. Start the conversation!</p>
             {% endif %}
-        </li>
-    {% endmacro %}
-    {# ---------- END MACRO ---------- #}
 
-    {% if messages %}
-        <ul>
-            {# only top-level messages here (no parent) #}
-            {% for message in messages if not message.parent_id %}
-                {{ render_message(message, messages) }}
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No messages yet. Start the conversation!</p>
-    {% endif %}
-
-    <h3>Send a new message</h3>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.content.label }}<br>
-            {{ form.content(rows=3, cols=60) }}
-            {% for error in form.content.errors %}
-                <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
-    </form>
+            <div class="chat-form">
+                <h3>Send a new message</h3>
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <p>
+                        {{ form.content(rows=3, placeholder='Type your message...') }}
+                        {% for error in form.content.errors %}
+                            <span class="error-message">{{ error }}</span>
+                        {% endfor %}
+                    </p>
+                    <p>{{ form.submit() }}</p>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

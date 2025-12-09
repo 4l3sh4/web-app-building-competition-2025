@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mentor Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+
+</head>
+<body class="sub-hex-bg">
+<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+
+<div class="shell">
+
+    <!-- HEADER PANEL -->
+    <div class="panel page-header">
+        <div class="page-header-row">
+            <div>
+                <h1 class="page-title">Mentor Dashboard</h1>
+                <p class="muted">
+                    See your profile, requests, and mentees at a glance.
+                </p>
+            </div>
+            <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+        </div>
+    </div>
+    
+    <!-- MAIN GRID: LEFT (requests/mentees) + RIGHT (quick links) -->
+    <div class="dashboard-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="dashboard-main">
+
+            <!-- SUMMARY CARDs -->
+            <div class="panel summary-panel">
+                <div class="summary-row">
+                    {% set pfp_filename = mentor_profile.pfp if mentor_profile.pfp else 'default_pfp.png' %}
+                    <div class="summary-pfp-wrap">
+                        <img src="{{ url_for('static', filename='uploads/pfp/' ~ pfp_filename) }}"
+                            alt="Profile Picture"
+                            class="summary-pfp">
+                    </div>
+
+                    <div class="summary-main">
+                        <div class="summary-name-row">
+                            <div class="summary-name">
+                                {{ mentor_profile.full_name }}
+                            </div>
+                            <span class="role-tag mentor-tag">MENTOR</span>
+                        </div>
+
+                        <div class="summary-subtext">
+                            {{ mentor_profile.faculty|upper }} | {{ position }}
+                        </div>
+                    </div>
+
+                    <div class="summary-actions">
+                        <a href="{{ url_for('edit_mentor_profile') }}" class="btn-main">
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPERTISE -->
+            <div class="panel">
+                <div class="section-title">Expertise</div>
+                {% if mentor_profile and mentor_profile.expertise %}
+                    {% set exp_list = mentor_profile.expertise.split(';') %}
+                    <div class="tag-row">
+                        {% for e in exp_list %}
+                            {% if e.strip() %}
+                                <span class="tag">{{ e.strip() }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted section-body">
+                        No expertise areas added yet.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- CONTACT & LINKS -->
+            <div class="panel">
+                <div class="section-title">Contact &amp; Links</div>
+                {% if current_user.is_authenticated and current_user.email %}
+                    <div class="section-body">
+                        <span class="label">Email:</span>
+                        <a href="mailto:{{ current_user.email }}" class="link-primary">
+                            {{ current_user.email }}
+                        </a>
+                    </div>
+                {% endif %}
+
+                {% if (mentor_profile and mentor_profile.office_location) or
+                    (mentor_profile and mentor_profile.linkedin_profile) %}
+
+                    {% if mentor_profile.office_location %}
+                        <div class="section-body">
+                            <span class="label">Office:</span>
+                            {{ mentor_profile.office_location }}
+                        </div>
+                    {% endif %}
+
+                    {% if mentor_profile.linkedin_profile %}
+                        <div class="section-body">
+                            <span class="label">LinkedIn:</span>
+                            <a href="{{ mentor_profile.linkedin_profile }}"
+                            target="_blank"
+                            class="link-primary">
+                                View Profile
+                            </a>
+                        </div>
+                    {% endif %}
+
+                {% else %}
+                    <p class="muted section-body">
+                        No contact information available.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- MENTORSHIP REQUESTS -->
+            <div class="panel">
+                <div class="section-title">Mentorship Requests</div>
+
+                {% if incoming_requests and incoming_requests|length > 0 %}
+                    <ol class="mentor-req-list">
+                        {% for req in incoming_requests %}
+                            <li class="mentor-req-row">
+
+                                <!-- LEFT SIDE: number, title, student -->
+                                <div class="req-left">
+                                    <span class="req-index">{{ loop.index }}.</span>
+
+                                    <a href="{{ url_for('review_mentor_request', req_id=req.id) }}"
+                                    class="req-title link-primary">
+                                        {{ req.title }}
+                                    </a>
+
+                                    <span class="req-separator">|</span>
+
+                                    <a href="{{ url_for('view_user', user_id=req.student.id) }}"
+                                    class="req-student link-primary">
+                                        {{ req.student.student_profile.full_name
+                                        if req.student.student_profile
+                                        else req.student.username }}
+                                    </a>
+                                </div>
+
+                                <!-- RIGHT SIDE: status + review button -->
+                                <div class="req-right">
+                                    <span class="status-pill status-{{ req.status|lower() }}">
+                                        {{ req.status }}
+                                    </span>
+
+                                    {% if req.status == "Pending" %}
+                                    <a href="{{ url_for('review_mentor_request', req_id=req.id) }}"
+                                    class="btn-review">
+                                        Review now
+                                    </a>
+                                    {% endif %}
+                                </div>
+
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted">You have no pending mentorship requests.</p>
+                {% endif %}
+            </div>
+
+            <!-- MY MENTEES -->
+            <div class="panel">
+                <div class="section-title">My Mentees</div>
+
+                {% if accepted_mentees and accepted_mentees|length > 0 %}
+                    <ul class="numbered-list">
+                        {% for req in accepted_mentees %}
+                            <li>
+                                <span class="item-index">{{ loop.index }}.</span>
+
+                                <!-- title -->
+                                <span class="request-title">
+                                    <a href="{{ url_for('review_mentor_request', req_id=req.id) }}"
+                                    class="link-primary request-title">
+                                        {{ req.title }}
+                                    </a>
+                                </span>
+
+                                <span class="req-separator">|</span>
+
+                                <!-- student name -->
+                                <a href="{{ url_for('view_user', user_id=req.student.id) }}"
+                                class="link-primary">
+                                    {{ req.student.student_profile.full_name
+                                    if req.student.student_profile and req.student.student_profile.full_name
+                                    else req.student.username }}
+                                </a>
+
+                                <span class="req-separator">|</span>
+
+                                <!-- mentorship type -->
+                                <span class="muted">
+                                    {{ get_mentorship_type_label(req.mentorship_type)
+                                    if get_mentorship_type_label is defined
+                                    else req.mentorship_type }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="muted">
+                        You don’t have any mentees yet.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="dashboard-side">
+            <div class="panel">
+                <div class="section-title">Quick Links</div>
+                <p class="section-body">
+                    <a href="{{ url_for('project_list') }}" class="link-primary">
+                        Go to Project Board →
+                    </a><br>
+                    <a href="{{ url_for('forum') }}" class="link-primary">
+                        Go to Discussion Board →
+                    </a><br>
+                        <a href="{{ url_for('logout') }}" class="link-primary">Log out →</a>
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+</body>
+</html>

@@ -3,57 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/project-requests.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/project-detail.css') }}">
+    <script src="{{url_for('static', filename='js/darkmode.js')}}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
     <title>{{ project.title }}</title>
 </head>
 <body>
-    <h1>{{ project.title }}</h1>
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="project-detail-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-    <p>
-        Posted by
-        <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
-            {{ project.owner.username }}
+    <div class="project-detail-container">
+        <!-- Back link -->
+        <a href="{{ url_for('project_list') }}" class="back-link">
+            ← Back to Project Board
         </a>
-        on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}
-    </p>
 
-    {% if project.project_type %}
-        <p><strong>Category:</strong> {{ project.project_type }}</p>
-    {% endif %}
+        <!-- Header -->
+        <header class="project-header">
+            {% if project.project_type %}
+                <div class="project-type-badge">
+                    {{ project.project_type }}
+                </div>
+            {% endif %}
 
-    <p><strong>Description:</strong></p>
-    <p>{{ project.description }}</p>
+            <h1 class="project-title">{{ project.title }}</h1>
 
-    {% if project.skills_required %}
-        <p><strong>Skills Required:</strong> {{ project.skills_required }}</p>
-    {% endif %}
-
-    <strong>Members:</strong>
-
-    {% if members %}
-        <ul>
-            {% for m in members %}
-                <li>
-                    <a href="{{ url_for('view_user', user_id=m.user.id) }}">
-                        {{ m.user.username }}
+            <div class="project-meta">
+                <span>
+                    Posted by
+                    <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
+                        {{ project.owner.username }}
                     </a>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+                </span>
+                <span>on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                <span>{{ member_count }} member{{ 1 if member_count == 1 else 's' }}</span>
+            </div>
+        </header>
 
+        <!-- Description card -->
+        <section class="detail-card">
+            <h2>Overview</h2>
+            <div class="project-description">
+                <p>{{ project.description }}</p>
+            </div>
+        </section>
 
-    {% if is_member %}
-        <p>You have joined this project.</p>
-        <p>
-            <a href="{{ url_for('project_chat', project_id=project.id) }}">Go to Project Chat</a><br>
-            <a href="{{ url_for('leave_project', project_id=project.id) }}">Leave this Project</a>
-        </p>
-    {% else %}
-        <p>
-            <a href="{{ url_for('join_project', project_id=project.id) }}">Join this project</a>
-        </p>
-    {% endif %}
+        <!-- Skills card -->
+        {% if project.skills_required %}
+        <section class="detail-card">
+            <h2>Skills Required</h2>
+            <div class="skills-section">
+                {% for skill in project.skills_required.split(',') %}
+                    {% set s = skill.strip() %}
+                    {% if s %}
+                        <span class="skill-tag">{{ s }}</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
-    <p><a href="{{ url_for('project_list') }}">Back to Project Board</a></p>
+        <!-- Members card -->
+        <section class="detail-card">
+            <h2>Members</h2>
+
+            {% if members %}
+                <div class="members-section">
+                    {% for m in members %}
+                        <a class="member-chip {% if m.user_id == project.owner_id %}owner{% endif %}"
+                           href="{{ url_for('view_user', user_id=m.user_id) }}">
+                            {{ m.user.username }}
+                            {% if m.user_id == project.owner_id %}
+                                <span>(Owner)</span>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="muted-text">No members yet. Be the first to join this project!</p>
+            {% endif %}
+        </section>
+
+        <!-- Participation / actions card -->
+        <section class="detail-card">
+            <h2>Participation</h2>
+
+            {# 1. Owner or member -> can access chat #}
+            {% if project.owner_id == current_user.id or is_member %}
+                {% if project.owner_id == current_user.id %}
+                    <p class="status-message muted">
+                        ⚙️ You are the owner of this project.
+                    </p>
+                {% else %}
+                    <p class="status-message success">
+                        <span class="status-badge status-success">You’re in</span>
+                        You’re a member of this project.
+                    </p>
+                {% endif %}
+
+                <div class="action-buttons">
+                    <a href="{{ url_for('project_chat', project_id=project.id) }}"
+                       class="btn btn-primary">
+                        Go to Project Chat
+                    </a>
+
+                    {# only non-owners can leave #}
+                    {% if project.owner_id != current_user.id %}
+                        <a href="{{ url_for('leave_project', project_id=project.id) }}"
+                           class="btn btn-danger">
+                            Leave this Project
+                        </a>
+                    {% endif %}
+                </div>
+
+            {# 2. Not owner and not member -> show join status / button #}
+            {% else %}
+                {% if join_status == 'pending' %}
+                    <p class="status-message pending">
+                        <span class="status-badge status-pending">Pending Approval</span>
+                        Your join request is waiting for approval from the project owner.
+                    </p>
+
+                {% elif join_status == 'rejected' %}
+                    <p class="status-message rejected">
+                        <span class="status-badge status-rejected">Request Rejected</span>
+                        Your previous join request was not approved by the project owner.
+                    </p>
+
+                {% else %}
+                    <a href="{{ url_for('request_join_project', project_id=project.id) }}"
+                       class="btn btn-primary request-link">
+                        Request to Join this Project
+                    </a>
+                {% endif %}
+            {% endif %}
+
+            {# 3. Owner tools panel – shown only if you are the owner #}
+            {% if project.owner_id == current_user.id %}
+                <div class="owner-actions">
+                    <div class="owner-actions-text">
+                        <h3>Owner Tools</h3>
+                        <p class="muted-text">
+                            Manage who can join and collaborate on this project.
+                        </p>
+                    </div>
+
+                    <div class="owner-actions-buttons">
+                        <a href="{{ url_for('manage_project_requests', project_id=project.id) }}"
+                           class="btn btn-ghost btn-small">
+                            Join Requests ({{ project.join_requests
+                                |selectattr('status', 'equalto', 'pending')
+                                |list|length }} pending)
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+    </div>
 </body>
 </html>

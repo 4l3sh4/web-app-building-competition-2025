@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ user.username }}'s Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile_view.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+
+<div class="shell">
+
+    {% with messages = get_flashed_messages(category_filter=['request_sent']) %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="panel flash-card">
+                    <div class="muted">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="profile-layout">
+
+        <!-- MAIN COLUMN -->
+        <div>
+
+            <!-- HEADER (shared) -->
+            <div class="panel header-card">
+            {% if user.role == 'student' %}
+                {% set profile = user.student_profile %}
+            {% else %}
+                {% set profile = user.mentor_profile %}
+            {% endif %}
+
+            <!-- LEFT: PFP -->
+            <div class="pfp-wrap">
+                {% if profile and profile.pfp %}
+                    <img src="{{ url_for('static', filename='uploads/pfp/' + profile.pfp) }}"
+                        alt="Profile picture" class="pfp">
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/pfp/default_pfp.png') }}"
+                        alt="Default profile picture" class="pfp">
+                {% endif %}
+            </div>
+
+            <!-- CENTER: Info -->
+            <div class="header-center">
+                <div class="name-row">
+                    <h2 class="profile-name">
+                        {% if profile and profile.full_name %}
+                            {{ profile.full_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </h2>
+
+                    <span class="badge {% if user.role=='student' %}badge-student{% else %}badge-mentor{% endif %}">
+                        {{ user.role|capitalize }}
+                    </span>
+
+                    {% if is_self %}
+                        <span class="username">(You)</span>
+                    {% endif %}
+                </div>
+
+                {% if user.role == 'student' %}
+                    <div class="subtitle">
+                        Year {{ profile.year }} Student |
+                        {{ get_faculty_full_name(profile.faculty) }}
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag">{{ get_programme_full_name(profile.programme) }}</span>
+                        {% if profile.specialization %}
+                            <span class="tag">{{ get_spec_full_name(profile.specialization) }}</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="subtitle">
+                        {{ profile.position }} |
+                        {{ get_faculty_full_name(profile.faculty) }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- RIGHT: Back button -->
+            <div class="header-actions">
+                <a href="{{ url_for('directory') }}" class="back-link">← Back</a>
+            </div>
+
+        </div>
+
+
+            {% if user.role == 'student' %}
+
+                <!-- STUDENT: ABOUT -->
+                <div class="panel">
+                    <div class="section-title">About</div>
+                    {% if profile and profile.bio %}
+                        <div class="body-text">
+                            {{ profile.bio }}
+                        </div>
+                    {% else %}
+                        <div class="muted">
+                            {% if is_self %}
+                                You haven't added a bio yet. You can edit it from your dashboard.
+                            {% else %}
+                                No bio has been added yet.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- STUDENT: PROJECTS -->
+                <div class="panel">
+                    <div class="section-title">Projects</div>
+
+                    {% if student_projects and student_projects|length > 0 %}
+                        <ul class="item-list">
+                            {% for p in student_projects %}
+                                <li>
+                                    <span class="item-index">{{ loop.index }}.</span>
+                                    <a href="{{ url_for('project_detail', project_id=p.id) }}"
+                                       class="item-title link">
+                                        {{ p.title }}
+                                    </a>
+                                    {% if p.project_type %}
+                                        <span class="item-meta"> — {{ p.project_type }}</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="muted">
+                            {% if is_self %}
+                                You haven't participated in any projects yet.
+                            {% else %}
+                                No projects to display yet.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- STUDENT: THREADS -->
+                <div class="panel">
+                    <div class="section-title">Discussion Threads</div>
+
+                    {% if student_threads and student_threads|length > 0 %}
+                        <ul class="item-list">
+                            {% for t in student_threads %}
+                                <li>
+                                    <span class="item-index">{{ loop.index }}.</span>
+                                    <a href="{{ url_for('thread_detail', thread_id=t.id) }}"
+                                       class="item-title link">
+                                        {{ t.title }}
+                                    </a>
+                                    {% if t.category %}
+                                        <span class="item-meta"> — {{ t.category }}</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="muted">
+                            {% if is_self %}
+                                You haven't started any threads yet.
+                            {% else %}
+                                No forum activity to display yet.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+            {% else %}
+
+                <!-- MENTOR: EXPERTISE -->
+                <div class="panel">
+                    <div class="section-title">Expertise</div>
+                    {% if profile and profile.expertise %}
+                        {% set exp_list = profile.expertise.split(';') %}
+                        <div class="tag-row">
+                            {% for e in exp_list %}
+                                {% if e.strip() %}
+                                    <span class="tag">{{ e.strip() }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="muted">
+                            Expertise areas have not been added yet.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- MENTOR: CONTACT -->
+                <div class="panel">
+                    <div class="section-title">Contact & Links</div>
+                        <div class ="body-text">
+                            <div class="meta-row">
+                                <span class="label">Email:</span>
+                                <span>{{ user.email }}</span>
+                            </div>
+                        </div>
+                    {% if (profile and profile.office_location) or (profile and profile.linkedin_profile) %}
+                        {% if profile.office_location %}
+                            <div class="body-text">
+                                <span class="label">Office:</span> {{ profile.office_location }}
+                            </div>
+                        {% endif %}
+                        {% if profile.linkedin_profile %}
+                            <div class="body-text">
+                                <span class="label">LinkedIn:</span>
+                                <a href="{{ profile.linkedin_profile }}" target="_blank" class="link">
+                                    View Profile
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="muted">
+                            No contact information available.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- MENTOR: GENERIC MENTORSHIP INFO -->
+                <div class="panel">
+                    <div class="section-title">Mentorship</div>
+                    <div class="body-text muted">
+                        This mentor can support students in areas such as:
+                        FYP / Final Year Project, Course assistance, Personal project,
+                        Research, and Skill development.
+                    </div>
+                </div>
+
+            {% endif %}
+
+        </div>
+
+        <!-- SIDE COLUMN -->
+        <div class="side-column">
+            <div class="panel">
+                <div class="section-title">Actions</div>
+
+                {% if user.role == 'mentor' and current_user.is_authenticated and current_user.role == 'student' and not is_self %}
+                    <p class="muted" style="margin-bottom:8px;">
+                        Interested in guidance from this mentor?
+                    </p>
+                    <a href="{{ url_for('request_mentorship', mentor_id=user.id) }}" class="btn-main">
+                        Request Mentorship
+                    </a>
+                {% else %}
+                    <p class="muted">
+                        No available actions.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

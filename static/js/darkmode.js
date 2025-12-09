@@ -10,12 +10,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // If the toggle exists, update its icon and attach handler
     if (themeToggle) {
-        themeToggle.textContent = html.classList.contains('dark-mode') ? '☀️' : '🌙';
+        const setIcon = (isDark) => {
+            // When dark mode is active show the light-mode icon (sun),
+            // otherwise show the dark-mode icon (moon).
+            themeToggle.innerHTML = isDark
+                ? '<img src="/static/assets/light-mode.png" alt="Light mode" class="theme-icon">'
+                : '<img src="/static/assets/dark-mode.png" alt="Dark mode" class="theme-icon">';
+        };
+
+        setIcon(html.classList.contains('dark-mode'));
 
         themeToggle.addEventListener('click', () => {
             html.classList.toggle('dark-mode');
             const isDark = html.classList.contains('dark-mode');
-            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            setIcon(isDark);
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         });
     }
