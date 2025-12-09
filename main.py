@@ -1,6 +1,6 @@
 from flask import Flask, render_template, url_for, redirect, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField, SelectField
@@ -238,7 +238,7 @@ class ProjectJoinRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     responded_at = db.Column(db.DateTime)
 
-    user = db.relationship("User", backref="project_join_requests")
+    user = db.relationship("User", backref="manage_project_requests")
     project = db.relationship("Project", backref="join_requests")
 
 
@@ -270,6 +270,18 @@ class ProjectMessage(db.Model):
         'ProjectMessage',
         backref=db.backref('parent', remote_side=[id]),
         lazy='dynamic'
+    )
+
+class ProjectChatSeen(db.Model):
+    __tablename__ = 'project_chat_seen'
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    last_seen_at = db.Column(db.DateTime, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('project_id', 'user_id'),
     )
 
 def get_message_depth(message):
@@ -730,6 +742,43 @@ def dashboard():
         joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
         my_projects = owned_projects.union(joined_projects).order_by(Project.created_at.desc()).all()
 
+        owned_project_ids = [p.id for p in my_projects if p.owner_id == current_user.id]
+        join_counts_by_project = {}
+        if owned_project_ids:
+            rows = (
+                db.session.query(
+                    ProjectJoinRequest.project_id,
+                    func.count(ProjectJoinRequest.id)
+                )
+                .filter(
+                    ProjectJoinRequest.project_id.in_(owned_project_ids),
+                    ProjectJoinRequest.status == 'pending'
+                )
+                .group_by(ProjectJoinRequest.project_id)
+                .all()
+            )
+            join_counts_by_project = {pid: count for pid, count in rows}
+
+        unread_chat_by_project = {}
+        for project in my_projects:
+            # latest message time in this project
+            latest_msg = (
+                ProjectMessage.query
+                .filter_by(project_id=project.id)
+                .order_by(ProjectMessage.created_at.desc())
+                .first()
+            )
+            if not latest_msg:
+                continue  # no chat at all
+
+            seen = ProjectChatSeen.query.filter_by(
+                project_id=project.id,
+                user_id=current_user.id
+            ).first()
+
+            if not seen or latest_msg.created_at > seen.last_seen_at:
+                unread_chat_by_project[project.id] = True
+
         mentorship_requests = (MentorshipRequest.query
                         .filter_by(student_id=current_user.id)
                         .order_by(MentorshipRequest.created_at.desc())
@@ -749,6 +798,8 @@ def dashboard():
             my_projects=my_projects,
             mentorship_requests=mentorship_requests,
             my_threads=my_threads,
+            join_counts_by_project=join_counts_by_project,
+            unread_chat_by_project=unread_chat_by_project,
             is_self=True
         )
     
@@ -926,7 +977,7 @@ def project_detail(project_id):
         is_member=is_member,
         members=members,
         member_count=member_count,
-        join_status=join_status,   # 👈 pass to template
+        join_status=join_status, 
     )
 
 
@@ -1124,6 +1175,24 @@ def project_chat(project_id):
     messages = ProjectMessage.query.filter_by(project_id=project.id) \
                                    .order_by(ProjectMessage.created_at.asc()).all()
     members = ProjectMember.query.filter_by(project_id=project.id).all()
+
+    
+    seen = ProjectChatSeen.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    if not seen:
+        seen = ProjectChatSeen(
+            project_id=project.id,
+            user_id=current_user.id,
+            last_seen_at=datetime.utcnow()
+        )
+        db.session.add(seen)
+    else:
+        seen.last_seen_at = datetime.utcnow()
+
+    db.session.commit()
 
     return render_template(
         'project_chat.html',
