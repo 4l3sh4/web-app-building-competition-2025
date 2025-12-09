@@ -1,6 +1,6 @@
 from flask import Flask, render_template, url_for, redirect, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, RadioField, TextAreaField, SelectField
@@ -180,6 +180,8 @@ class StudentProfile(db.Model):
     specialization = db.Column(db.String(20), nullable=True)  
     bio = db.Column(db.Text)
     pfp = db.Column(db.String(255), nullable=True)
+    github_profile = db.Column(db.String(255), nullable=True)
+    linkedin_profile = db.Column(db.String(255), nullable=True)
 
 class MentorProfile(db.Model):
     user_id = db.Column(
@@ -225,6 +227,7 @@ class Project(db.Model):
     project_type = db.Column(db.String(50))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    accepting_requests = db.Column(db.Boolean, default=True)
     owner = db.relationship('User', backref='projects')
 
 
@@ -236,7 +239,7 @@ class ProjectJoinRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     responded_at = db.Column(db.DateTime)
 
-    user = db.relationship("User", backref="project_join_requests")
+    user = db.relationship("User", backref="manage_project_requests")
     project = db.relationship("Project", backref="join_requests")
 
 
@@ -257,17 +260,29 @@ class ProjectMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # 🆕 parent message (null = top-level message)
+    # parent message (null = top-level message)
     parent_id = db.Column(db.Integer, db.ForeignKey('project_message.id'), nullable=True)
 
     author = db.relationship('User')
     project = db.relationship('Project', backref='messages')
 
-    # 🆕 self-relation: a message can have many replies
+    # self-relation: a message can have many replies
     replies = db.relationship(
         'ProjectMessage',
         backref=db.backref('parent', remote_side=[id]),
         lazy='dynamic'
+    )
+
+class ProjectChatSeen(db.Model):
+    __tablename__ = 'project_chat_seen'
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    last_seen_at = db.Column(db.DateTime, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('project_id', 'user_id'),
     )
 
 def get_message_depth(message):
@@ -423,6 +438,30 @@ class MentorshipRequestForm(FlaskForm):
 
     submit = SubmitField("Submit request")
 
+class MentorChat(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    mentorship_request_id = db.Column(
+        db.Integer,
+        db.ForeignKey('mentorship_request.id'),
+        nullable=False
+    )
+
+    sender_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id'),
+        nullable=False
+    )
+
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sender = db.relationship('User')
+    mentorship_request = db.relationship(
+        'MentorshipRequest',
+        backref=db.backref('messages', lazy='dynamic')
+    )
+
 class ProjectForm(FlaskForm):
     title = StringField(
         "Project / Opportunity Title",
@@ -453,6 +492,12 @@ class ProjectForm(FlaskForm):
     )
     submit = SubmitField("Create")
 
+class MentorChatForm(FlaskForm):
+    content = TextAreaField(
+        "Message",
+        validators=[InputRequired()]
+    )
+    submit = SubmitField("Send")
 
 class ProjectMessageForm(FlaskForm):
     content = TextAreaField(
@@ -563,6 +608,8 @@ def edit_student_profile():
         year = int(request.form.get('year'))          
         specialization = request.form.get('specialization') or None
         bio = request.form.get('bio')
+        github_profile = request.form.get('github_profile') or None
+        linkedin_profile = request.form.get('linkedin_profile') or None
 
         if not profile:
             profile = StudentProfile(user_id=current_user.id)
@@ -585,6 +632,8 @@ def edit_student_profile():
         profile.year = year
         profile.specialization = specialization
         profile.bio = bio
+        profile.github_profile = github_profile.strip() if github_profile else None
+        profile.linkedin_profile = linkedin_profile.strip() if linkedin_profile else None
 
         db.session.add(profile)
         db.session.commit()
@@ -724,6 +773,43 @@ def dashboard():
         joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
         my_projects = owned_projects.union(joined_projects).order_by(Project.created_at.desc()).all()
 
+        owned_project_ids = [p.id for p in my_projects if p.owner_id == current_user.id]
+        join_counts_by_project = {}
+        if owned_project_ids:
+            rows = (
+                db.session.query(
+                    ProjectJoinRequest.project_id,
+                    func.count(ProjectJoinRequest.id)
+                )
+                .filter(
+                    ProjectJoinRequest.project_id.in_(owned_project_ids),
+                    ProjectJoinRequest.status == 'pending'
+                )
+                .group_by(ProjectJoinRequest.project_id)
+                .all()
+            )
+            join_counts_by_project = {pid: count for pid, count in rows}
+
+        unread_chat_by_project = {}
+        for project in my_projects:
+            # latest message time in this project
+            latest_msg = (
+                ProjectMessage.query
+                .filter_by(project_id=project.id)
+                .order_by(ProjectMessage.created_at.desc())
+                .first()
+            )
+            if not latest_msg:
+                continue  # no chat at all
+
+            seen = ProjectChatSeen.query.filter_by(
+                project_id=project.id,
+                user_id=current_user.id
+            ).first()
+
+            if not seen or latest_msg.created_at > seen.last_seen_at:
+                unread_chat_by_project[project.id] = True
+
         mentorship_requests = (MentorshipRequest.query
                         .filter_by(student_id=current_user.id)
                         .order_by(MentorshipRequest.created_at.desc())
@@ -743,6 +829,8 @@ def dashboard():
             my_projects=my_projects,
             mentorship_requests=mentorship_requests,
             my_threads=my_threads,
+            join_counts_by_project=join_counts_by_project,
+            unread_chat_by_project=unread_chat_by_project,
             is_self=True
         )
     
@@ -760,6 +848,44 @@ def dashboard():
                 .filter_by(mentor_id=current_user.id, status='Accepted')
                 .order_by(MentorshipRequest.created_at.desc())
                 .all()
+        )
+
+                # ---- MY PROJECTS ----
+        my_projects = (
+            Project.query
+            .filter_by(owner_id=current_user.id)
+            .order_by(Project.created_at.desc())
+            .all()
+        )
+
+        # ---- NEW CHAT PER PROJECT ----
+        unread_chat_by_project = {}
+
+        for project in my_projects:
+            latest_msg = (
+                ProjectMessage.query
+                .filter_by(project_id=project.id)
+                .order_by(ProjectMessage.created_at.desc())
+                .first()
+            )
+
+            if not latest_msg:
+                continue
+
+            seen = ProjectChatSeen.query.filter_by(
+                project_id=project.id,
+                user_id=current_user.id
+            ).first()
+
+            if not seen or latest_msg.created_at > seen.last_seen_at:
+                unread_chat_by_project[project.id] = True
+
+        # ---- MY DISCUSSIONS ----
+        my_threads = (
+            Thread.query
+            .filter_by(creator_id=current_user.id)
+            .order_by(Thread.created_at.desc())
+            .all()
         )
 
         return render_template(
@@ -796,6 +922,34 @@ def view_user(user_id):
         student_threads = Thread.query.filter_by(creator_id=user.id) \
                                       .order_by(Thread.created_at.desc()) \
                                       .limit(5).all()
+    
+        accepted_mentorship = None
+
+    # current user is student, viewing a mentor
+    if current_user.role == 'student' and user.role == 'mentor':
+        accepted_mentorship = (
+            MentorshipRequest.query
+            .filter_by(
+                student_id=current_user.id,
+                mentor_id=user.id,
+                status='Accepted'
+            )
+            .order_by(MentorshipRequest.responded_at.desc())
+            .first()
+        )
+
+    # current user is mentor, viewing a student
+    elif current_user.role == 'mentor' and user.role == 'student':
+        accepted_mentorship = (
+            MentorshipRequest.query
+            .filter_by(
+                student_id=user.id,
+                mentor_id=current_user.id,
+                status='Accepted'
+            )
+            .order_by(MentorshipRequest.responded_at.desc())
+            .first()
+        )
 
     return render_template(
         'profile_view.html',
@@ -806,6 +960,7 @@ def view_user(user_id):
         get_programme_full_name=get_programme_full_name,
         get_spec_full_name=get_spec_full_name,
         get_faculty_full_name=get_faculty_full_name,
+        accepted_mentorship=accepted_mentorship
     )
 
 
@@ -896,10 +1051,28 @@ def create_project():
     return render_template('project_create.html', form=form)
 
 
-@app.route("/projects/<int:project_id>")
+@app.route("/projects/<int:project_id>",  methods=["GET", "POST"])
 @login_required
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
+
+    # ✅ Handle accepting_requests toggle (OWNER ONLY)
+    if request.method == "POST":
+        if project.owner_id != current_user.id:
+            abort(403)
+
+        project.accepting_requests = 'accepting_requests' in request.form
+        db.session.commit()
+
+        flash(
+            "Project is now accepting join requests."
+            if project.accepting_requests
+            else "Project is no longer accepting join requests.",
+            "info"
+        )
+
+        return redirect(url_for('project_detail', project_id=project.id))
+
 
     is_member = any(m.user_id == current_user.id for m in project.members)
     members = project.members
@@ -920,7 +1093,7 @@ def project_detail(project_id):
         is_member=is_member,
         members=members,
         member_count=member_count,
-        join_status=join_status,   # 👈 pass to template
+        join_status=join_status, 
     )
 
 
@@ -1119,6 +1292,24 @@ def project_chat(project_id):
                                    .order_by(ProjectMessage.created_at.asc()).all()
     members = ProjectMember.query.filter_by(project_id=project.id).all()
 
+    
+    seen = ProjectChatSeen.query.filter_by(
+        project_id=project.id,
+        user_id=current_user.id
+    ).first()
+
+    if not seen:
+        seen = ProjectChatSeen(
+            project_id=project.id,
+            user_id=current_user.id,
+            last_seen_at=datetime.utcnow()
+        )
+        db.session.add(seen)
+    else:
+        seen.last_seen_at = datetime.utcnow()
+
+    db.session.commit()
+
     return render_template(
         'project_chat.html',
         project=project,
@@ -1127,7 +1318,6 @@ def project_chat(project_id):
         members=members,
         get_message_depth=get_message_depth   # 👈 make available in Jinja
     )
-
 
 # ---------------------
 # BASIC DISCUSSION BOARD
@@ -1488,6 +1678,45 @@ def review_mentor_request(req_id):
         is_mentor=is_mentor,
         is_student=is_student,
         mentor_type=get_mentorship_type_label(req.mentorship_type)
+    )
+
+@app.route('/mentorship/<int:req_id>/chat', methods=['GET', 'POST'])
+@login_required
+def mentor_chat(req_id):
+    req = MentorshipRequest.query.get_or_404(req_id)
+
+    if current_user.id not in (req.student_id, req.mentor_id):
+        abort(403)
+
+    if req.status != 'Accepted':
+        flash("Chat is only available after the mentorship is accepted.", "warning")
+        return redirect(url_for('dashboard'))
+
+    form = MentorChatForm()
+
+    if form.validate_on_submit():
+        msg = MentorChat(
+            mentorship_request_id=req.id,
+            sender_id=current_user.id,
+            content=form.content.data.strip()
+        )
+        db.session.add(msg)
+        db.session.commit()
+
+        return redirect(url_for('mentor_chat', req_id=req.id))
+
+    messages = (
+        MentorChat.query
+        .filter_by(mentorship_request_id=req.id)
+        .order_by(MentorChat.created_at.asc())
+        .all()
+    )
+
+    return render_template(
+        'mentor_chat.html',
+        req=req,
+        messages=messages,
+        form=form
     )
 
 if __name__ == '__main__':

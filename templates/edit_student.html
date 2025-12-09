@@ -11,7 +11,9 @@
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
 
     <div class="shell">
 
@@ -120,6 +122,26 @@
                         <label for="bio">Bio</label>
                         <textarea name="bio" id="bio"
                                 placeholder="Tell others about your interests, skills, or goals…">{{ profile.bio if profile else '' }}</textarea>
+                    </div>
+
+                    <!-- GitHub -->
+                    <div class="form-group">
+                        <label for="github_profile">GitHub</label>
+                        <input type="url"
+                            id="github_profile"
+                            name="github_profile"
+                            placeholder="https://github.com/username"
+                            value="{{ profile.github_profile if profile and profile.github_profile else '' }}">
+                    </div>
+
+                    <!-- LinkedIn -->
+                    <div class="form-group">
+                        <label for="linkedin_profile">LinkedIn</label>
+                        <input type="url"
+                            id="linkedin_profile"
+                            name="linkedin_profile"
+                            placeholder="https://www.linkedin.com/in/username"
+                            value="{{ profile.linkedin_profile if profile and profile.linkedin_profile else '' }}">
                     </div>
 
                     <!-- Submit -->
