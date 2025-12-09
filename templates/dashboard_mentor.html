@@ -229,6 +229,7 @@
                 {% if my_projects and my_projects|length > 0 %}
                     <ol class="item-list simple-list">
                         {% for project in my_projects %}
+                            {% set join_count = join_counts_by_project.get(project.id, 0) %}
                             <li class="project-row">
                                 <div class="project-main">
                                     <span class="item-index">{{ loop.index }}.</span>
@@ -240,11 +241,14 @@
                                 </div>
 
                                 <div class="project-tags">
-                                    {% if unread_chat_by_project.get(project.id) %}
-                                        <a href="{{ url_for('project_chat', project_id=project.id) }}"
-                                        class="pill-chat">
-                                            New Chat
+                                    {% if join_count > 0 %}
+                                        <a href="{{ url_for('manage_project_requests', project_id=project.id) }}"
+                                        class="pill-join">
+                                            Join Requests ({{ join_count }})
                                         </a>
+                                    {% endif %}
+                                    {% if unread_chat_by_project.get(project.id) %}
+                                        <a href="{{ url_for('project_chat', project_id=project.id) }}" class="pill-chat">New Chat</a>
                                     {% endif %}
                                 </div>
                             </li>

@@ -850,27 +850,43 @@ def dashboard():
                 .all()
         )
 
-                # ---- MY PROJECTS ----
-        my_projects = (
-            Project.query
-            .filter_by(owner_id=current_user.id)
-            .order_by(Project.created_at.desc())
-            .all()
-        )
+        my_threads = Thread.query.filter_by(creator_id=current_user.id) \
+                                    .order_by(Thread.created_at.desc()) \
+                                    .all()
 
-        # ---- NEW CHAT PER PROJECT ----
+        owned_projects = Project.query.filter_by(owner_id=current_user.id)
+        joined_project_ids = db.session.query(ProjectMember.project_id).filter_by(user_id=current_user.id)
+        joined_projects = Project.query.filter(Project.id.in_(joined_project_ids))
+        my_projects = owned_projects.union(joined_projects).order_by(Project.created_at.desc()).all()
+
+        owned_project_ids = [p.id for p in my_projects if p.owner_id == current_user.id]
+        join_counts_by_project = {}
+        if owned_project_ids:
+            rows = (
+                db.session.query(
+                    ProjectJoinRequest.project_id,
+                    func.count(ProjectJoinRequest.id)
+                )
+                .filter(
+                    ProjectJoinRequest.project_id.in_(owned_project_ids),
+                    ProjectJoinRequest.status == 'pending'
+                )
+                .group_by(ProjectJoinRequest.project_id)
+                .all()
+            )
+            join_counts_by_project = {pid: count for pid, count in rows}
+
         unread_chat_by_project = {}
-
         for project in my_projects:
+            # latest message time in this project
             latest_msg = (
                 ProjectMessage.query
                 .filter_by(project_id=project.id)
                 .order_by(ProjectMessage.created_at.desc())
                 .first()
             )
-
             if not latest_msg:
-                continue
+                continue  # no chat at all
 
             seen = ProjectChatSeen.query.filter_by(
                 project_id=project.id,
@@ -880,14 +896,6 @@ def dashboard():
             if not seen or latest_msg.created_at > seen.last_seen_at:
                 unread_chat_by_project[project.id] = True
 
-        # ---- MY DISCUSSIONS ----
-        my_threads = (
-            Thread.query
-            .filter_by(creator_id=current_user.id)
-            .order_by(Thread.created_at.desc())
-            .all()
-        )
-
         return render_template(
             'dashboard_mentor.html',
             mentor_profile=mentor_profile,
@@ -896,6 +904,10 @@ def dashboard():
             incoming_requests=incoming_requests,
             accepted_mentees=accepted_mentees,
             get_mentorship_type_label=get_mentorship_type_label,
+            my_threads=my_threads,
+            my_projects=my_projects,
+            join_counts_by_project=join_counts_by_project,
+            unread_chat_by_project=unread_chat_by_project
         )
 
 @app.route('/users/<int:user_id>')
