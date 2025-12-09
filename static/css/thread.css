@@ -107,17 +107,10 @@ html.dark-mode {
 
 .score-label {
     font-size: 0.75rem;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #777;
-}
-
-.score-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    background: #f3f4ff;
-    border-radius: 999px;
-    padding: 0.25rem 0.8rem;
+    color: var(--accent-1);
 }
 
 .score-actions {
@@ -136,7 +129,7 @@ html.dark-mode {
 .thread-body-inline {
     margin-top: 0.4rem;
     padding-top: 0.75rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid var(--border-colors);
     font-size: 0.95rem;
     line-height: 1.6;
 }
@@ -266,12 +259,9 @@ html.dark-mode {
 }
 
 .score-actions .vote-link {
+    color: var(--accent-1);
     text-decoration: none;
     font-weight: 500;
-}
-
-.score-actions .vote-link:hover {
-    text-decoration: underline;
 }
 
 /* active states */
@@ -281,4 +271,10 @@ html.dark-mode {
 
 .vote-down.vote-active {
     color: #dc2626; /* red */
+}
+
+html.dark-mode textarea {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
 }

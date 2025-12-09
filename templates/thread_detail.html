@@ -65,7 +65,7 @@
 
             <div class="thread-score-box">
                 <div class="score-label">SCORE</div>
-                <div class="score-value">{{ thread.score or 0 }}</div>
+                <div class="pill-text pill-text-score">{{ thread.score or 0 }}</div>
                 <div class="score-actions">
                     <a href="{{ url_for('upvote_thread', thread_id=thread.id) }}"
                     class="vote-link vote-up {% if user_vote_value == 1 %}vote-active{% endif %}">

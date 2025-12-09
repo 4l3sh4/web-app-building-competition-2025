@@ -106,6 +106,12 @@
     margin-top: 0px;
 }
 
+.pill-text-score {
+	background: var(--accent-1);
+	color: white;
+    margin-top: 3px;
+}
+
 /* links to threads */
 
 .link-primary {
