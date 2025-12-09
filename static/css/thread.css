@@ -1,11 +1,3 @@
-:root {
-    --border-colors: rgba(226,232,240,0.9);
-}
-
-html.dark-mode {
-    --border-colors: #334155;
-}
-
 .thread-page {
     max-width: 900px;
     margin: 2rem auto;
