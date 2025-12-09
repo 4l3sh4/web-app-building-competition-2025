@@ -19,7 +19,7 @@
 
 <div class="thread-page">
     <div class="thread-topbar">
-        <a href="{{ url_for('forum') }}" class="back-link">← Back to Discussion Board</a>
+        <a href="{{ url_for('forum') }}" class="pill-text pill-text-blue">← Back to Discussion Board</a>
     </div>
 
     {# --- author profile + display name --- #}
@@ -85,7 +85,7 @@
         </div>
     </section>
 
-
+    <!-- Comments -->
     <section class="thread-comments">
         <h2>Comments</h2>
 
@@ -181,7 +181,7 @@
                     <span class="form-error">{{ error }}</span>
                 {% endfor %}
             </div>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="pill-text pill-text-blue">
                 Post Reply
             </button>
         </form>
