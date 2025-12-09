@@ -118,7 +118,7 @@ html.dark-mode .back-link {
     color: var(--accent-1);
     text-decoration: none;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: bold;
 }
 
 .current-members .member-name:hover {

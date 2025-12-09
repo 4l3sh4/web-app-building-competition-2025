@@ -15,8 +15,9 @@
 
 /* Header */
 .thread-header {
-    background: #ffffff;
+    background: var(--card-bg);
     padding: 1.3rem 1.6rem 1.4rem;
+    border: 1px solid var(--border-colors);
     border-radius: 24px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
     margin-bottom: 1.5rem;
@@ -75,7 +76,9 @@
 }
 
 .thread-author {
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent-1);
     text-decoration: none;
 }
 
@@ -96,17 +99,10 @@
 
 .score-label {
     font-size: 0.75rem;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #777;
-}
-
-.score-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    background: #f3f4ff;
-    border-radius: 999px;
-    padding: 0.25rem 0.8rem;
+    color: var(--accent-1);
 }
 
 .score-actions {
@@ -125,7 +121,7 @@
 .thread-body-inline {
     margin-top: 0.4rem;
     padding-top: 0.75rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: 1px solid var(--border-colors);
     font-size: 0.95rem;
     line-height: 1.6;
 }
@@ -144,14 +140,16 @@
 
 .comment-card {
     margin-bottom: 0.75rem;
+    color: var(--text-primary);
 }
 
 .comment-main {
     display: flex;
     gap: 0.75rem;
     align-items: flex-start;
-    background: #ffffff;
+    background: var(--card-bg);
     padding: 0.75rem 0.9rem;
+    border: 1px solid var(--border-colors);
     border-radius: 12px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.04);
 }
@@ -173,11 +171,14 @@
 
 .comment-author {
     font-weight: 600;
+    color: var(--accent-1);
     text-decoration: none;
 }
 
 .comment-reply-link {
-    text-decoration: underline;
+    color: var(--accent-1);
+    font-weight: bold;
+    text-decoration: none;
     cursor: pointer;
 }
 
@@ -191,7 +192,7 @@
     list-style: none;
     margin: 0.25rem 0 0.25rem 2.5rem;
     padding-left: 0.75rem;
-    border-left: 2px solid rgba(0,0,0,0.06);
+    border-left: 2px solid var(--accent-1);
 }
 
 .no-comments {
@@ -200,9 +201,10 @@
 
 /* comment form */
 .comment-form-section {
-    background: #ffffff;
+    background: var(--card-bg);
     padding: 1rem 1.25rem;
     border-radius: 14px;
+    border: 1px solid var(--border-colors);
     box-shadow: 0 4px 10px rgba(0,0,0,0.04);
 }
 
@@ -215,7 +217,6 @@
     min-height: 80px;
     padding: 0.6rem 0.7rem;
     border-radius: 8px;
-    border: 1px solid #d1d5db;
     resize: vertical;
     font-family: inherit;
     font-size: 0.95rem;
@@ -250,12 +251,9 @@
 }
 
 .score-actions .vote-link {
+    color: var(--accent-1);
     text-decoration: none;
     font-weight: 500;
-}
-
-.score-actions .vote-link:hover {
-    text-decoration: underline;
 }
 
 /* active states */
@@ -265,4 +263,10 @@
 
 .vote-down.vote-active {
     color: #dc2626; /* red */
+}
+
+html.dark-mode textarea {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
 }

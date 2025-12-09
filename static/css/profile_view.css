@@ -109,7 +109,7 @@ html.dark-mode .panel {
 .profile-name {
     margin: 0;
     font-size: 1.4rem;
-    color: #111827;
+    color: var(--accent-1);
 }
 
 .username {
@@ -132,7 +132,7 @@ html.dark-mode .panel {
 }
 
 .badge-student {
-    color: #1d4ed8;
+    color: #0954A0;
     background: #e0eaff;
     border-color: #bcd4ff;
 }
@@ -145,7 +145,7 @@ html.dark-mode .panel {
 
 .subtitle {
     font-size: 0.9rem;
-    color: #374151;
+    color: var(--text-primary);
     margin-bottom: 4px;
 }
 
@@ -164,9 +164,9 @@ html.dark-mode .panel {
     font-size: 0.78rem;
     padding: 4px 10px;
     border-radius: 999px;
-    background: #eef1ff;
-    color: #1b2a60;
-    border: 1px solid #dde4ff;
+    background: var(--tag);
+    color: var(--accent-1);
+    border: 1px solid var(--accent-1);
     white-space: nowrap;
 }
 
@@ -195,15 +195,6 @@ html.dark-mode .panel {
     font-weight: 600;
 }
 
-.link {
-    color: #0e41b0;
-    text-decoration: none;
-}
-
-.link:hover {
-    text-decoration: underline;
-}
-
 .item-meta {
     font-size: 0.8rem;
     color: #6b7280;
@@ -217,13 +208,11 @@ html.dark-mode .panel {
 
 .section-body {
     font-size: 0. nine rem;
-    color: #374151;
     line-height: 1.6;
     padding-bottom: 5px;
 }
 
 .side-column .panel {
-    position: sticky;
     top: 80px;
 }
 
@@ -246,20 +235,4 @@ html.dark-mode .panel {
 
 .flash-card {
     margin-bottom: 18px;
-    background-color: #e2fee3;
-    color: #0ba03f;
-    border: 1px solid #96e8a9e6;
-    padding: 10px 14px;
-    border-radius: 8px;
-}
-
-.theme-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    height: 48px;
-    width: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }

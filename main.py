@@ -430,7 +430,7 @@ class MentorshipRequestForm(FlaskForm):
     )
 
     document = FileField(
-        "Upload related document",
+        "Upload documents",
         validators=[
             FileAllowed(['pdf', 'doc', 'docx', 'zip', 'ppt', 'pptx'], 'Documents only!')
         ]

@@ -27,6 +27,8 @@ html.dark-mode {
 
 /* HEADER */
 .chat-header {
+    display: flex;
+    justify-content: space-between;
     margin-bottom: 20px;
 }
 
@@ -279,6 +281,12 @@ html.dark-mode .inline-reply {
     outline: none;
     border-color: var(--accent-1);
     box-shadow: 0 0 0 1px rgba(9, 84, 160, 0.2);
+}
+
+html.dark-mode textarea {
+    background: #020617;
+    border-color: #475569;
+    color: #e5e7eb;
 }
 
 /* submit button (WTForms submit input) */

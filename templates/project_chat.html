@@ -31,12 +31,13 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <body>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode"><img src="{{ url_for('static', filename='assets/logo/ebhive_logo.png') }}" alt="logo"></button>
     <div class="chat-page-container">
         <div class="chat-header">
-            <a class="back-link" href="{{ url_for('project_detail', project_id=project.id) }}">
+            <h1>Project Chat: {{ project.title }}</h1>
+            <a class="pill-text pill-text-blue" href="{{ url_for('project_detail', project_id=project.id) }}">
                 ← Back to Project Details
             </a>
-            <h1>Project Chat: {{ project.title }}</h1>
         </div>
 
         <div class="chat-card">

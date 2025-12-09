@@ -8,14 +8,13 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-
-    background: #fff;
+    background: var(--card-bg);
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
+    border: 1px solid var(--border-colors);
     border-radius: 18px;
-
     box-shadow: 0 6px 14px rgba(0,0,0,0.06);
-    transition: 0.15s ease;
+    transition: all 0.2s ease;
 }
 
 .thread-card:hover {
@@ -54,6 +53,8 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 0.4rem;
+    font-weight: bold;
+    margin-bottom: 4px;
 }
 
 .thread-title a {
@@ -67,16 +68,16 @@
 }
 
 .thread-category {
-    background: #e7f2ff;
+    background: #E0EAFF;
     padding: 0.15rem 0.5rem;
     border-radius: 999px;
     font-size: 0.75rem;
-    color: #3366cc;
+    color: #0954A0;
 }
 
 .thread-meta {
     font-size: 0.8rem;
-    color: #666;
+    color: var(--muted);
     display: flex;
     gap: 0.25rem;
 }
@@ -103,11 +104,10 @@ html.dark-mode .thread-score {
 
 .thread-card {
     cursor: pointer;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    transition: all 0.2s ease;
 }
 
 .thread-card:hover {
-    background: rgba(255,255,255,0.9);
     box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 

@@ -389,20 +389,24 @@ html.dark-mode .owner-actions-text h3 {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: rgba(9, 84, 160, 0.05);
+    background: linear-gradient(135deg, rgba(9, 84, 160, 0.08), rgba(95, 175, 255, 0.05));
     border-radius: 20px;
     font-size: 14px;
-    border: 1px solid rgba(9, 84, 160, 0.1);
+    border: 1px solid rgba(9, 84, 160, 0.15);
+    text-decoration: none;
+    font-weight: bold;
+    color: var(--accent-1);
 }
 
 html.dark-mode .member-chip {
     background: rgba(95, 175, 255, 0.08);
-    border-color: rgba(95, 175, 255, 0.15);
+    color: var(--accent-2);
+    border-color: rgba(95, 175, 255, 0.2);
 }
 
 .member-chip.owner {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.2);
+    border-color: #CCDDEC;
+    background: #F5FAFE;
 }
 
 .member-chip img {

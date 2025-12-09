@@ -310,3 +310,24 @@ html.dark-mode .expertise-hint {
     border-radius: 8px;
     margin-bottom: 16px;
 }
+
+input[type="file"]{
+    display: none;
+}
+
+.pfp-form label {
+    display: block;
+    position: relative;
+    width: 170px;
+    height: 35px;
+    margin-top: 16px;
+    border-radius: 25px;
+    background: linear-gradient(40deg, var(--accent-1), var(--accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform .2s ease-out;
+}

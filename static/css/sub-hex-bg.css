@@ -6,6 +6,8 @@
     --bg-primary: linear-gradient(135deg, #f6f8ff 0%, #e8f0ff 35%, #f7fafc 100%);
     --hex-light: rgba(95, 175, 255, 0.05);
     --hex-dark-light: rgba(9, 84, 160, 0.05);
+    --tag: #E0EAFF;
+    --border-colors: rgba(226,232,240,0.9);
 }
 
 html.dark-mode {
@@ -17,6 +19,8 @@ html.dark-mode {
     --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 35%, #111827 100%);
     --hex-light: rgba(95, 175, 255, 0.03);
     --hex-dark-light: rgba(9, 84, 160, 0.03);
+    --tag: rgba(255, 255, 255, 0.107);
+    --border-colors: #334155;
 }
 
 body {

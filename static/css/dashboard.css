@@ -65,7 +65,6 @@
 }
 
 .dashboard-side .panel {
-    position: sticky;
     top: 80px;
 }
 
@@ -77,18 +76,6 @@
 
 .section-body {
     font-size: 0.92rem;
-}
-
-/* links */
-
-.link-primary {
-    color: #23408e;
-    text-decoration: none;
-    font-size: 0.92rem;
-}
-
-.link-primary:hover {
-    text-decoration: underline;
 }
 
 /* responsive */
@@ -109,6 +96,10 @@
 
     .summary-row {
         align-items: flex-start;
+    }
+
+    .pill-text {
+        margin-top: 0px;
     }
 }
 
@@ -156,7 +147,7 @@
 
 .summary-subtext {
     font-size: 0.9rem;
-    color: #4b5563;
+    color: var(--muted);
     margin-top: 2px;
 }
 
@@ -247,7 +238,7 @@
 }
 
 .student-tag {
-    color: #1d4ed8;
+    color: #0954A0;
     background: #e0eaff;
     border-color: #bcd4ff;
 }
@@ -312,14 +303,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.mentor-name {
-    font-weight: 500;
-}
-
-.request-title {
-    font-weight: 500;
 }
 
 /* =========================================
@@ -444,7 +427,6 @@ html.dark-mode {
     --card-bg: #1e293b;   /* deep slate blue */
     --accent-1: #e2e8f0;
     --accent-2: #93c5fd;
-    --muted: #cbd5e1;
     --border-dark: #334155;
 }
 
@@ -463,16 +445,6 @@ html.dark-mode .profile-name,
 html.dark-mode .subtitle,
 html.dark-mode .section-body {
     color: #e2e8f0;
-}
-
-html.dark-mode .muted {
-    color: #94a3b8;
-}
-
-/* links */
-
-html.dark-mode .link-primary {
-    color: #93c5fd;
 }
 
 /* buttons */

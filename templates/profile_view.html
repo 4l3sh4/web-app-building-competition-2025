@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile_view.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body>
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
@@ -87,14 +88,7 @@
                     </div>
                 {% endif %}
             </div>
-
-            <!-- RIGHT: Back button -->
-            <div class="header-actions">
-                <a href="{{ url_for('directory') }}" class="back-link">← Back</a>
-            </div>
-
         </div>
-
 
             {% if user.role == 'student' %}
 
@@ -172,7 +166,7 @@
                                 <li>
                                     <span class="item-index">{{ loop.index }}.</span>
                                     <a href="{{ url_for('thread_detail', thread_id=t.id) }}"
-                                       class="item-title link">
+                                       class="item-title link-primary">
                                         {{ t.title }}
                                     </a>
                                     {% if t.category %}
@@ -231,7 +225,7 @@
                         {% if profile.linkedin_profile %}
                             <div class="body-text">
                                 <span class="label">LinkedIn:</span>
-                                <a href="{{ profile.linkedin_profile }}" target="_blank" class="link">
+                                <a href="{{ profile.linkedin_profile }}" target="_blank" class="link-primary">
                                     View Profile
                                 </a>
                             </div>
@@ -269,7 +263,7 @@
                             Chat
                         </a>
                     {% else %}
-                        <p class="muted section-body">
+                        <p class="section-body muted">
                             Interested in guidance from this mentor?
                         </p>
                         <br>
@@ -295,8 +289,11 @@
                     </p>
                 {% endif %}
             </div>
+            <div class="header-actions">
+                <a href="{{ url_for('directory') }}" class="pill-text pill-text-no-margin">← Back</a>
+            </div>
         </div>
-
+        
     </div>
 </div>
 </body>

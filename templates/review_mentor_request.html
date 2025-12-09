@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body>
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
@@ -47,7 +48,7 @@
                 </p>
             </div>
 
-            <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="pill-text pill-text-blue">← Back to Dashboard</a>
         </div>
     </div>
 

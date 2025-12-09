@@ -16,11 +16,11 @@
     </button>
 
     <div class="container">
+        <a class="pill-text pill-text-blue pill-bottom" href="{{ url_for('project_detail', project_id=project.id) }}">
+        ← Back to Project
+        </a>
         <div class="card requests-card">
             <div class="page-header">
-                <a class="back-link" href="{{ url_for('project_detail', project_id=project.id) }}">
-                    ← Back to Project
-                </a>
                 <h1>Join Requests: {{ project.title }}</h1>
             </div>
             

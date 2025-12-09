@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/directory.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sub-hex-bg.css') }}">
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo/ebhive_icon.png') }}">
 </head>
 <body>
         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
@@ -23,7 +24,7 @@
                         Browse students and mentors, filter by faculty, role, and expertise.
                     </p>
                 </div>
-                <a href="{{ url_for('home') }}" class="back-link">← Back to Home</a>
+                <a href="{{ url_for('home') }}" class="pill-text pill-text-blue">← Back to Home</a>
             </div>
         </div>
 
@@ -44,7 +45,7 @@
                         <button type="button" class="dropdown-btn" onclick="toggleDropdown('faculty-dropdown')">
                             Faculties ▼
                         </button>
-                        <div class="dropdown-content">
+                        <div class="dropdown-content smaller-dropdown-content">
                             {% for code, name in FACULTIES %}
                             <label>
                                 <input type="checkbox"
@@ -82,8 +83,6 @@
                         </label>
                     </div>
 
-                    <span class="filters-divider">|</span>
-
                     <!-- expertise filter -->
                     <div id="expertise-section" style="display:none;">
                         <div class="dropdown" id="expertise-dropdown">
@@ -110,7 +109,7 @@
         </div>
 
         <!-- Results panel -->
-        <div class="panel list-panel">
+        <div class="panel list-panel" >
         {% if combined_list %}
             <div class="list">
                 {% for item in combined_list %}
