@@ -112,6 +112,22 @@
                             {% endif %}
                         </div>
                     {% endif %}
+                    <br>
+                    {% if profile.github_profile or profile.linkedin_profile %}
+                        <div class="body-text profile-links">
+                            {% if profile.github_profile %}
+                                <a href="{{ profile.github_profile }}" target="_blank" class="link-primary">
+                                    GitHub →
+                                </a>
+                            {% endif %}
+                            {% if profile.linkedin_profile %}
+                                {% if profile.github_profile %} · {% endif %}
+                                <a href="{{ profile.linkedin_profile }}" target="_blank" class="link-primary">
+                                    LinkedIn →
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- STUDENT: PROJECTS -->

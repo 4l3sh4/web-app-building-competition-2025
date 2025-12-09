@@ -180,6 +180,8 @@ class StudentProfile(db.Model):
     specialization = db.Column(db.String(20), nullable=True)  
     bio = db.Column(db.Text)
     pfp = db.Column(db.String(255), nullable=True)
+    github_profile = db.Column(db.String(255), nullable=True)
+    linkedin_profile = db.Column(db.String(255), nullable=True)
 
 class MentorProfile(db.Model):
     user_id = db.Column(
@@ -257,13 +259,13 @@ class ProjectMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # 🆕 parent message (null = top-level message)
+    # parent message (null = top-level message)
     parent_id = db.Column(db.Integer, db.ForeignKey('project_message.id'), nullable=True)
 
     author = db.relationship('User')
     project = db.relationship('Project', backref='messages')
 
-    # 🆕 self-relation: a message can have many replies
+    # self-relation: a message can have many replies
     replies = db.relationship(
         'ProjectMessage',
         backref=db.backref('parent', remote_side=[id]),
@@ -563,6 +565,8 @@ def edit_student_profile():
         year = int(request.form.get('year'))          
         specialization = request.form.get('specialization') or None
         bio = request.form.get('bio')
+        github_profile = request.form.get('github_profile') or None
+        linkedin_profile = request.form.get('linkedin_profile') or None
 
         if not profile:
             profile = StudentProfile(user_id=current_user.id)
@@ -585,6 +589,8 @@ def edit_student_profile():
         profile.year = year
         profile.specialization = specialization
         profile.bio = bio
+        profile.github_profile = github_profile.strip() if github_profile else None
+        profile.linkedin_profile = linkedin_profile.strip() if linkedin_profile else None
 
         db.session.add(profile)
         db.session.commit()
@@ -1127,7 +1133,6 @@ def project_chat(project_id):
         members=members,
         get_message_depth=get_message_depth   # 👈 make available in Jinja
     )
-
 
 # ---------------------
 # BASIC DISCUSSION BOARD

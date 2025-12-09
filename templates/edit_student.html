@@ -122,6 +122,26 @@
                                 placeholder="Tell others about your interests, skills, or goals…">{{ profile.bio if profile else '' }}</textarea>
                     </div>
 
+                    <!-- GitHub -->
+                    <div class="form-group">
+                        <label for="github_profile">GitHub</label>
+                        <input type="url"
+                            id="github_profile"
+                            name="github_profile"
+                            placeholder="https://github.com/username"
+                            value="{{ profile.github_profile if profile and profile.github_profile else '' }}">
+                    </div>
+
+                    <!-- LinkedIn -->
+                    <div class="form-group">
+                        <label for="linkedin_profile">LinkedIn</label>
+                        <input type="url"
+                            id="linkedin_profile"
+                            name="linkedin_profile"
+                            placeholder="https://www.linkedin.com/in/username"
+                            value="{{ profile.linkedin_profile if profile and profile.linkedin_profile else '' }}">
+                    </div>
+
                     <!-- Submit -->
                     <button type="submit" class="btn-save">Save Profile</button>
                 </form>

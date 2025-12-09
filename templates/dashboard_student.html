@@ -57,6 +57,25 @@
                                 · {{ specialization_full }}
                             {% endif %}
                         </div>
+
+                        <div class="summary-links">
+                            {% if student_profile.github_profile %}
+                                <a href="{{ student_profile.github_profile }}"
+                                target="_blank"
+                                class="link-primary">
+                                    GitHub →
+                                </a>
+                            {% endif %}
+
+                            {% if student_profile.linkedin_profile %}
+                                {% if student_profile.github_profile %} · {% endif %}
+                                <a href="{{ student_profile.linkedin_profile }}"
+                                target="_blank"
+                                class="link-primary">
+                                    LinkedIn →
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="summary-actions">
@@ -67,6 +86,17 @@
                 </div>
             </div>
 
+            <!-- ABOUT ME -->
+            <div class="panel">
+                <div class="section-title">About Me</div>
+                <p class="section-body">
+                    {% if student_profile.bio %}
+                        {{ student_profile.bio }}
+                    {% else %}
+                        You haven't added a bio yet. Tell mentors and teammates more about yourself!
+                    {% endif %}
+                </p>
+            </div>
             <!-- MY PROJECTS -->
             <div class="panel">
                 <div class="section-title">My Projects</div>
