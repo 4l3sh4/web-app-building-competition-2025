@@ -1,6 +1,6 @@
 # web-app-building-competition-2025
 
-A web app made by Alesha, Ariana and Amirah to compete in MMU's **STEM Fun Carnival 2025 Web App Building Competition**.
+A web app made by me, Ariana and Amirah to compete in MMU's **STEM Fun Carnival 2025 Web App Building Competition**.
 
 Our project is a mentorship & collaboration platform for MMU students and mentors, designed to make it easier to:
 
@@ -35,7 +35,7 @@ We call it **eBhive** 🐝
 - Office location & LinkedIn link.
 - Profile picture upload.
 
-### 📇 People Directory
+### 📇 Directory
 - Browse students & mentors in a single directory.
 - Search by name.
 - Filter by:
@@ -104,3 +104,20 @@ We call it **eBhive** 🐝
 ```bash
 git clone https://github.com/<your-username>/web-app-building-competition-2025.git
 cd web-app-building-competition-2025
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+
+### 3. Running the App
+
+- Run main,py
+- By default, the app will run at:
+``bash
+```markdown
+### 2. Install dependencies
+
+> (Optional but recommended) Activate your virtual environment first, then:
+
+```bash
+pip install -r requirements.txt
