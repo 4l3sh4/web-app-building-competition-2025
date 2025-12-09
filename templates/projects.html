@@ -33,7 +33,7 @@
 
     <!-- Filter form -->
     <form method="get">
-        <h3><label for="category">Filter by category:</label></h3>
+        <label for="category">Filter by category:</label>
         <select name="category" id="category" onchange="this.form.submit()">
             <option value="All" {% if selected_category == 'All' %}selected{% endif %}>All</option>
             <option value="Competition" {% if selected_category == 'Competition' %}selected{% endif %}>Competition</option>

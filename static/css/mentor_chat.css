@@ -23,7 +23,8 @@
 }
 
 .dm-card {
-    background: #ffffff;
+    background: var(--card-bg);
+    border: 1px solid var(--border-colors);
     border-radius: 24px;
     padding: 24px 28px;
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
@@ -92,6 +93,7 @@
     border-radius: 14px;
     font-size: 0.85rem;
     line-height: 1.4;
+    color: black;
 }
 
 .dm-incoming {
@@ -176,4 +178,18 @@
     .dm-bubble {
         max-width: 85%;
     }
+}
+
+html.dark-mode input[type="text"],
+html.dark-mode input[type="email"],
+html.dark-mode input[type="url"],
+html.dark-mode select,
+html.dark-mode textarea {
+    background: #020617;
+    border-color: #475569;
+    color: #e5e7eb;
+}
+
+html.dark-mode .dm-messages {
+    background: #020617;
 }
