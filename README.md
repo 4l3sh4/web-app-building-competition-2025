@@ -1,6 +1,6 @@
 # web-app-building-competition-2025
 
-A web app made by Ariana and Amirah to compete in MMU's **STEM Fun Carnival 2025 Web App Building Competition**.
+A web app made by Alesha, Ariana and Amirah to compete in MMU's **STEM Fun Carnival 2025 Web App Building Competition**.
 
 Our project is a mentorship & collaboration platform for MMU students and mentors, designed to make it easier to:
 
