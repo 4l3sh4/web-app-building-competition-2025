@@ -217,7 +217,70 @@
                     </p>
                 {% endif %}
             </div>
+
+            <!-- MY PROJECTS -->
+            <div class="panel">
+                <div class="section-title">My Projects</div>
+
+                {% if my_projects and my_projects|length > 0 %}
+                    <ol class="item-list simple-list">
+                        {% for project in my_projects %}
+                            <li class="project-row">
+                                <div class="project-main">
+                                    <span class="item-index">{{ loop.index }}.</span>
+                                    <a href="{{ url_for('project_detail', project_id=project.id) }}"
+                                    class="item-title link-primary">
+                                        {{ project.title }}
+                                    </a>
+                                    <span class="item-meta">— {{ project.project_type }}</span>
+                                </div>
+
+                                <div class="project-tags">
+                                    {% if unread_chat_by_project.get(project.id) %}
+                                        <a href="{{ url_for('project_chat', project_id=project.id) }}"
+                                        class="pill-chat">
+                                            New Chat
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t created any projects yet.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- MY DISCUSSIONS -->
+            <div class="panel">
+                <div class="section-title">My Discussions</div>
+
+                {% if my_threads and my_threads|length > 0 %}
+                    <ol class="item-list simple-list">
+                        {% for thread in my_threads %}
+                            <li>
+                                <span class="item-index">{{ loop.index }}.</span>
+                                <a href="{{ url_for('thread_detail', thread_id=thread.id) }}"
+                                class="item-title link-primary">
+                                    {{ thread.title }}
+                                </a>
+                                <span class="item-meta">
+                                    — {{ thread.created_at.strftime('%d %b %Y') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="muted section-body">
+                        You haven’t started any discussions yet.
+                    </p>
+                {% endif %}
+            </div>
+
         </div>
+
 
         <!-- RIGHT COLUMN -->
         <div class="dashboard-side">

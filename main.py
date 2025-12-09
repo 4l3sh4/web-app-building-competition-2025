@@ -227,6 +227,7 @@ class Project(db.Model):
     project_type = db.Column(db.String(50))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    accepting_requests = db.Column(db.Boolean, default=True)
     owner = db.relationship('User', backref='projects')
 
 
@@ -819,6 +820,44 @@ def dashboard():
                 .all()
         )
 
+                # ---- MY PROJECTS ----
+        my_projects = (
+            Project.query
+            .filter_by(owner_id=current_user.id)
+            .order_by(Project.created_at.desc())
+            .all()
+        )
+
+        # ---- NEW CHAT PER PROJECT ----
+        unread_chat_by_project = {}
+
+        for project in my_projects:
+            latest_msg = (
+                ProjectMessage.query
+                .filter_by(project_id=project.id)
+                .order_by(ProjectMessage.created_at.desc())
+                .first()
+            )
+
+            if not latest_msg:
+                continue
+
+            seen = ProjectChatSeen.query.filter_by(
+                project_id=project.id,
+                user_id=current_user.id
+            ).first()
+
+            if not seen or latest_msg.created_at > seen.last_seen_at:
+                unread_chat_by_project[project.id] = True
+
+        # ---- MY DISCUSSIONS ----
+        my_threads = (
+            Thread.query
+            .filter_by(creator_id=current_user.id)
+            .order_by(Thread.created_at.desc())
+            .all()
+        )
+
         return render_template(
             'dashboard_mentor.html',
             mentor_profile=mentor_profile,
@@ -953,10 +992,28 @@ def create_project():
     return render_template('project_create.html', form=form)
 
 
-@app.route("/projects/<int:project_id>")
+@app.route("/projects/<int:project_id>",  methods=["GET", "POST"])
 @login_required
 def project_detail(project_id):
     project = Project.query.get_or_404(project_id)
+
+    # ✅ Handle accepting_requests toggle (OWNER ONLY)
+    if request.method == "POST":
+        if project.owner_id != current_user.id:
+            abort(403)
+
+        project.accepting_requests = 'accepting_requests' in request.form
+        db.session.commit()
+
+        flash(
+            "Project is now accepting join requests."
+            if project.accepting_requests
+            else "Project is no longer accepting join requests.",
+            "info"
+        )
+
+        return redirect(url_for('project_detail', project_id=project.id))
+
 
     is_member = any(m.user_id == current_user.id for m in project.members)
     members = project.members

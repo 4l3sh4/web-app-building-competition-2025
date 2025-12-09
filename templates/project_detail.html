@@ -144,10 +144,16 @@
                     </p>
 
                 {% else %}
-                    <a href="{{ url_for('request_join_project', project_id=project.id) }}"
-                       class="btn btn-primary request-link">
-                        Request to Join this Project
-                    </a>
+                    {% if project.accepting_requests %}
+                        <a href="{{ url_for('request_join_project', project_id=project.id) }}"
+                        class="btn btn-primary">
+                            Request to Join
+                        </a>
+                    {% else %}
+                        <span class="muted">
+                            This project is not accepting join requests.
+                        </span>
+                    {% endif %}
                 {% endif %}
             {% endif %}
 
@@ -169,6 +175,20 @@
                                 |list|length }} pending)
                         </a>
                     </div>
+
+                    <!-- Accepting join requests -->
+                    <form method="POST" class="form-inline">
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox"
+                                    name="accepting_requests"
+                                    onchange="this.form.submit()"
+                                    {% if project.accepting_requests %}checked{% endif %}>
+                                Accept join requests
+                            </label>
+                        </div>
+                    </form>
+
                 </div>
             {% endif %}
         </section>
