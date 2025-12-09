@@ -54,7 +54,15 @@
                     {% endif %}
                     <h3>{{ project.title }}</h3>
                     <p class="project-excerpt">{{ project.description|truncate(220) }}</p>
-                    Posted by {{ project.owner.username }} · {{ project.created_at.strftime('%Y-%m-%d') }}
+                    Posted by
+                    {% if project.owner.role == 'student' and project.owner.student_profile %}
+                        {{ project.owner.student_profile.full_name }}
+                    {% elif project.owner.role == 'mentor' and project.owner.mentor_profile %}
+                        {{ project.owner.mentor_profile.full_name }}
+                    {% else %}
+                        {{ project.owner.username }}
+                    {% endif %}
+                    · {{ project.created_at.strftime('%Y-%m-%d') }}
                 </a>
             {% endfor %}
         </div>

@@ -12,6 +12,10 @@
     <title>{{ project.title }}</title>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
+    
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -45,11 +49,19 @@
                 <span>
                     Posted by
                     <a href="{{ url_for('view_user', user_id=project.owner.id) }}">
+                    {% if project.owner.role == 'student' and project.owner.student_profile %}
+                        {{ project.owner.student_profile.full_name }}
+                    {% elif project.owner.role == 'mentor' and project.owner.mentor_profile %}
+                        {{ project.owner.mentor_profile.full_name }}
+                    {% else %}
                         {{ project.owner.username }}
+                    {% endif %}
+                    · {{ project.created_at.strftime('%Y-%m-%d') }}
+
                     </a>
                 </span>
                 <span>on {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
-                <span>{{ member_count }} member{{ 1 if member_count == 1 else 's' }}</span>
+                <span>{{ member_count }} member{{ '' if member_count == 1 else 's' }}</span>
             </div>
         </header>
 
@@ -84,8 +96,16 @@
                 <div class="members-section">
                     {% for m in members %}
                         <a class="member-chip {% if m.user_id == project.owner_id %}owner{% endif %}"
-                           href="{{ url_for('view_user', user_id=m.user_id) }}">
-                            {{ m.user.username }}
+                        href="{{ url_for('view_user', user_id=m.user_id) }}">
+                            
+                            {% if m.user.role == 'student' and m.user.student_profile %}
+                                {{ m.user.student_profile.full_name }}
+                            {% elif m.user.role == 'mentor' and m.user.mentor_profile %}
+                                {{ m.user.mentor_profile.full_name }}
+                            {% else %}
+                                {{ m.user.username }}
+                            {% endif %}
+
                             {% if m.user_id == project.owner_id %}
                                 <span>(Owner)</span>
                             {% endif %}

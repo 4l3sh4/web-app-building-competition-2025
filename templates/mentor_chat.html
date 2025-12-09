@@ -12,7 +12,10 @@
     <title>Mentorship Chat</title>
 </head>
 <body>
-    
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <img src="{{ url_for('static', filename='assets/light-mode.png') }}" alt="Toggle theme" class="theme-icon">
+    </button>
+
 {% if current_user.id == req.mentor_id %}
     {% set chat_profile = req.student.student_profile %}
 {% else %}
@@ -59,7 +62,14 @@
                             <div class="dm-text">
                                 {{ msg.content }}
                             </div>
-                            <div class="dm-meta">
+
+                            <div class="dm-meta
+                                {% if msg.sender_id == current_user.id %}
+                                    meta-right
+                                {% else %}
+                                    meta-left
+                                {% endif %}
+                            ">
                                 <span class="dm-sender">
                                     {% if msg.sender_id == current_user.id %}
                                         You
