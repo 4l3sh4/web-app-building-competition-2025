@@ -1285,7 +1285,7 @@ def project_chat(project_id):
             except (ValueError, TypeError):
                 parent_msg = None
 
-        # 🔒 depth limit: new message max level = 4
+        # depth limit: new message max level = 4
         if parent_msg is not None and get_message_depth(parent_msg) >= 4:
             flash("Replies are limited to 4 levels deep.", "error")
             return redirect(url_for('project_chat', project_id=project.id))

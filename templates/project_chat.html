@@ -70,7 +70,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="message-body">
                             <div class="message-header">
                                 <a href="{{ url_for('view_user', user_id=message.author.id) }}">
-                                    {{ message.author.username }}
+                                    {% if profile and profile.full_name %}
+                                        {{ profile.full_name }}
+                                    {% else %}
+                                        {{ message.author.username }}
+                                    {% endif %}
                                 </a>
                                 <span class="message-meta">
                                     · {{ message.created_at.strftime('%Y-%m-%d %H:%M') }}
